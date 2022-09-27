@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+}
+
+group ''
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    implementation 'org.telegram:telegrambots:6.1.0'
+    implementation 'org.telegram:telegrambotsextensions:6.1.0'
+    implementation 'org.telegram:telegrambots-spring-boot-starter:6.1.0'
+    implementation 'org.telegram:telegrambots-abilities:6.1.0'
+    implementation 'org.slf4j:slf4j-simple:2.0.0'
+
+}
+
+test {
+    useJUnitPlatform()
+}
