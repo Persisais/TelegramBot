@@ -1,8 +1,15 @@
 plugins {
     id 'java'
+    id 'maven-publish'
 }
 
-group ''
+compileJava.options.encoding = 'UTF-8'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+group 'persisais'
 version '1.0-SNAPSHOT'
 
 repositories {
@@ -17,10 +24,24 @@ dependencies {
     implementation 'org.telegram:telegrambotsextensions:6.1.0'
     implementation 'org.telegram:telegrambots-spring-boot-starter:6.1.0'
     implementation 'org.telegram:telegrambots-abilities:6.1.0'
-    implementation 'org.slf4j:slf4j-simple:2.0.0'
-
+    implementation 'org.slf4j:slf4j-simple:2.0.1'
 }
 
 test {
     useJUnitPlatform()
 }
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'edu.bbte.gradleex.mavenplugin'
+            artifactId = 'gradleex-mavenplugin'
+            version = '1.0.0-SNAPSHOT'
+
+            from components.java
+        }
+    }
+}
+
+
+
+
