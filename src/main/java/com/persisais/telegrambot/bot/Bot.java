@@ -63,7 +63,7 @@ public class Bot extends TelegramLongPollingBot {
                     break;
                 case "/add_user":
                     botService.addUser();
-                    sendMsg(message, "i added user");
+                    sendMsg(message, "Я тебя запомнил");
                     break;
                 default:
                     sendMsg(message, "Бип-буп, я робот-идиот, команда не распознана");
