@@ -1,5 +1,7 @@
 package com.persisais.telegrambot.bot;
 
+import com.persisais.telegrambot.Service.BotService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -10,6 +12,10 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 @Component
 public class Bot extends TelegramLongPollingBot {
+
+    @Autowired
+    private BotService botService;
+
     @Override
     public String getBotUsername() {
         return "FMv0.000003";
@@ -54,6 +60,10 @@ public class Bot extends TelegramLongPollingBot {
                     break;
                 case "/random":
                     sendMsg(message, String.valueOf((int) (Math.random() * 100 + 1)));
+                    break;
+                case "/add_user":
+                    botService.addUser();
+                    sendMsg(message, "i added user");
                     break;
                 default:
                     sendMsg(message, "Бип-буп, я робот-идиот, команда не распознана");
