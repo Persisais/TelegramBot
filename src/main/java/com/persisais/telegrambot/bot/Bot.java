@@ -1,6 +1,8 @@
 package com.persisais.telegrambot.bot;
 
 import com.persisais.telegrambot.Service.BotService;
+import com.persisais.telegrambot.model.TovarDataDto;
+import com.persisais.telegrambot.model.TovarDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -64,6 +66,12 @@ public class Bot extends TelegramLongPollingBot {
                 case "/add_user":
                     botService.addUser();
                     sendMsg(message, "Я тебя запомнил");
+                    break;
+                case "/get_tovar":
+                    TovarDataDto tovarArr =botService.getTovar();
+                    for (TovarDto tovar: tovarArr.getData()) {
+                        sendMsg(message, tovar.getName()+"\n"+tovar.getCategory().getName()+"\nЦена:"+tovar.getCost()+"Р\n"+tovar.getDescription()+"\n"+tovar.getPhoto());
+                    }
                     break;
                 default:
                     sendMsg(message, "Бип-буп, я робот-идиот, команда не распознана");
