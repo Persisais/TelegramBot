@@ -1,6 +1,8 @@
 package com.persisais.telegrambot.bot;
 
 import com.persisais.telegrambot.Service.BotService;
+import com.persisais.telegrambot.model.CategoryDataDto;
+import com.persisais.telegrambot.model.CategoryDto;
 import com.persisais.telegrambot.model.TovarDataDto;
 import com.persisais.telegrambot.model.TovarDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,7 +72,13 @@ public class Bot extends TelegramLongPollingBot {
                 case "/get_tovar":
                     TovarDataDto tovarArr =botService.getTovar();
                     for (TovarDto tovar: tovarArr.getData()) {
-                        sendMsg(message, tovar.getName()+"\n"+tovar.getCategory().getName()+"\nЦена:"+tovar.getCost()+"Р\n"+tovar.getDescription()+"\n"+tovar.getPhoto());
+                        sendMsg(message, tovar.getName()+"\n"+tovar.getCategory().getName()+"\nЦена:"+tovar.getCost()+"₽\n"+tovar.getDescription()+"\n"+tovar.getPhoto());
+                    }
+                    break;
+                case "/get_categories":
+                    CategoryDataDto categoryArr =botService.getCategories();
+                    for (CategoryDto category: categoryArr.getData()) {
+                        sendMsg(message, category.getName()+"\n"+category.getDescription());
                     }
                     break;
                 default:

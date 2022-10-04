@@ -1,5 +1,6 @@
 package com.persisais.telegrambot.Service;
 
+import com.persisais.telegrambot.model.CategoryDataDto;
 import com.persisais.telegrambot.model.TovarDataDto;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ public class BotService {
     public RestTemplate restTemplate = new RestTemplate();
     public String http = "http://localhost:8080/api/users";
     public String http2 = "http://localhost:8080/api/tovar";
+    public String http3 = "http://localhost:8080/api/category";
 
     public void addUser() {
         HttpHeaders headers = new HttpHeaders();
@@ -44,7 +46,16 @@ public class BotService {
             e.printStackTrace();
         }
         return response;
+    }
 
+    public CategoryDataDto getCategories() {
+        CategoryDataDto response = null;
+        try {
+            response = restTemplate.getForObject(new URI(http3), CategoryDataDto.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return response;
     }
 
 
