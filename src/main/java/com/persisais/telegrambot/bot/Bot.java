@@ -78,6 +78,7 @@ public class Bot extends TelegramLongPollingBot {
                     }
                     break;
                 /*
+
                 case "/get_categories":
                     CategoryDataDto categoryArr =botService.getCategories();
                     for (CategoryDto category: categoryArr.getData()) {
