@@ -2,6 +2,7 @@ package com.persisais.telegrambot.Service;
 
 import com.persisais.telegrambot.model.CategoryDataDto;
 import com.persisais.telegrambot.model.TovarDataDto;
+import com.persisais.telegrambot.model.TovarDto;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -9,18 +10,15 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Component
 public class BotService {
 
     public RestTemplate restTemplate = new RestTemplate();
     public String http = "http://localhost:8080/api/users";
-    public String http2 = "http://localhost:8080/api/tovar";
-    public String http3 = "http://localhost:8080/api/category";
+    public String http2 = "http://localhost:8080/api/tovar/get";
+    //public String http3 = "http://localhost:8080/api/category";
 
     public void addUser() {
         HttpHeaders headers = new HttpHeaders();
@@ -38,16 +36,16 @@ public class BotService {
         ResponseEntity<String> response = restTemplate.postForEntity(http, entity, String.class);
     }
 
-    public TovarDataDto getTovar() {
-        TovarDataDto response = null;
+    public TovarDto[] getTovar() {
+        TovarDto[] response = null;
                 try {
-            response = restTemplate.getForObject(new URI(http2), TovarDataDto.class);
+            response = restTemplate.getForObject(new URI(http2), TovarDto[].class);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return response;
     }
-
+    /*
     public CategoryDataDto getCategories() {
         CategoryDataDto response = null;
         try {
@@ -57,6 +55,8 @@ public class BotService {
         }
         return response;
     }
+     */
+
 
 
 }

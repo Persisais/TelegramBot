@@ -14,6 +14,8 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
+import java.util.List;
+
 @Component
 public class Bot extends TelegramLongPollingBot {
 
@@ -70,17 +72,20 @@ public class Bot extends TelegramLongPollingBot {
                     sendMsg(message, "Я тебя запомнил");
                     break;
                 case "/get_tovar":
-                    TovarDataDto tovarArr =botService.getTovar();
-                    for (TovarDto tovar: tovarArr.getData()) {
+                    TovarDto[] tovarArr =botService.getTovar();
+                    for (TovarDto tovar: tovarArr) {
                         sendMsg(message, tovar.getName()+"\n"+tovar.getCategory().getName()+"\nЦена:"+tovar.getCost()+"₽\n"+tovar.getDescription()+"\n"+tovar.getPhoto());
                     }
                     break;
+                /*
                 case "/get_categories":
                     CategoryDataDto categoryArr =botService.getCategories();
                     for (CategoryDto category: categoryArr.getData()) {
                         sendMsg(message, category.getName()+"\n"+category.getDescription());
                     }
                     break;
+
+                 */
                 default:
                     sendMsg(message, "Бип-буп, я робот-идиот, команда не распознана");
                     break;
