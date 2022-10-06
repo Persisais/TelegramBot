@@ -1,5 +1,6 @@
 package com.persisais.telegrambot.bot;
 
+import ch.qos.logback.core.joran.conditional.ThenOrElseActionBase;
 import com.persisais.telegrambot.Service.BotService;
 import com.persisais.telegrambot.model.CategoryDataDto;
 import com.persisais.telegrambot.model.CategoryDto;
@@ -53,7 +54,9 @@ public class Bot extends TelegramLongPollingBot {
 
         if (update.hasMessage() && update.getMessage().hasText()) {
             Message message = update.getMessage();
+            TovarDto[] tovarArr = null;
             switch (message.getText()) {
+                
                 case "/start":
                     sendMsg(message, "Здравствуйте, " + message.getFrom().getFirstName() + "! Чтобы посмотреть список команд, введите /help");
                     break;
@@ -68,11 +71,18 @@ public class Bot extends TelegramLongPollingBot {
                     sendMsg(message, String.valueOf((int) (Math.random() * 100 + 1)));
                     break;
                 case "/add_user":
-                    botService.addUser();
+                    String name = message.getChat().getFirstName();
+                    botService.addUser(name);
                     sendMsg(message, "Я тебя запомнил");
                     break;
                 case "/get_tovar":
-                    TovarDto[] tovarArr =botService.getTovar();
+                    tovarArr =botService.getTovar();
+                    for (TovarDto tovar: tovarArr) {
+                        sendMsg(message, tovar.getName()+"\n"+tovar.getCategory().getName()+"\nЦена:"+tovar.getCost()+"₽\n"+tovar.getDescription()+"\n"+tovar.getPhoto());
+                    }
+                    break;
+                case "/get_tovar_by_cat":
+                    tovarArr =botService.getTovarByCategory();
                     for (TovarDto tovar: tovarArr) {
                         sendMsg(message, tovar.getName()+"\n"+tovar.getCategory().getName()+"\nЦена:"+tovar.getCost()+"₽\n"+tovar.getDescription()+"\n"+tovar.getPhoto());
                     }

@@ -18,9 +18,9 @@ public class BotService {
     public RestTemplate restTemplate = new RestTemplate();
     public String http = "http://localhost:8080/api/users";
     public String http2 = "http://localhost:8080/api/tovar/get";
-    //public String http3 = "http://localhost:8080/api/category";
+    public String http3 = "http://localhost:8080/api/tovar/get/category/2";
 
-    public void addUser() {
+    public void addUser(String name) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -28,7 +28,7 @@ public class BotService {
         Map<String, Object> map= new HashMap<>();
         map.put("agreement", "true");
         map.put("mail", "sdsdfds");
-        map.put("name", "ass2");
+        map.put("name", name);
         map.put("phone", "88005553535");
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
@@ -40,6 +40,16 @@ public class BotService {
         TovarDto[] response = null;
                 try {
             response = restTemplate.getForObject(new URI(http2), TovarDto[].class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return response;
+    }
+
+    public TovarDto[] getTovarByCategory() {
+        TovarDto[] response = null;
+        try {
+            response = restTemplate.getForObject(new URI(http3), TovarDto[].class);
         } catch (Exception e) {
             e.printStackTrace();
         }
