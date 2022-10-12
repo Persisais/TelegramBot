@@ -25,6 +25,7 @@ public class BotService {
     public String http6 = "http://localhost:8080/api/users/tg/";
     //можем пока хотя бы админа прикрутить
 
+
     HttpHeaders createHeaders(String username, String password){
         return new HttpHeaders() {{
             String auth = username + ":" + password;
@@ -34,15 +35,20 @@ public class BotService {
             set( "Authorization", authHeader );
         }};
     }
+
+
     
     public void addUser(Long id_telegram, String name, String firstname, String lastname,String phone,String mail, boolean agreement) {
         HttpHeaders headers = null;
+
         if (id_telegram == 1675364273) {
             headers = createHeaders("Admin", "Admin");
         }
         else {
             headers = createHeaders("User", "User");
         }
+
+
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         //тебе надо удалить моего пользователя в бд, там условие уникальности на тг айди. Я добавить не смогу
