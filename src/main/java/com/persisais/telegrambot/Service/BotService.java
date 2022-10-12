@@ -39,9 +39,12 @@ public class BotService {
         HttpHeaders headers = null;
         if (id_telegram == 1675364273) {
             headers = createHeaders("Admin", "Admin");
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         }
+        else {
+            headers = createHeaders("User", "User");
+        }
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         //тебе надо удалить моего пользователя в бд, там условие уникальности на тг айди. Я добавить не смогу
 
         Map<String, Object> map = new HashMap<>();
@@ -52,6 +55,7 @@ public class BotService {
         map.put("phone", phone);
         map.put("mail", mail);
         map.put("agreement", agreement);
+        //прст проект открыть
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
 
