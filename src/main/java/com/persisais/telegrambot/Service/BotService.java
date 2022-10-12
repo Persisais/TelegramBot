@@ -7,7 +7,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.*;
+
+
+import static com.sun.scenario.Settings.set;
 
 @Component
 public class BotService {
@@ -19,13 +23,28 @@ public class BotService {
     public String http4 = "http://localhost:8080/api/tovar/get/category";
     public String http5 = "http://localhost:8080/api/carts/";
     public String http6 = "http://localhost:8080/api/users/tg/";
+    //можем пока хотя бы админа прикрутить
 
+    HttpHeaders createHeaders(String username, String password){
+        return new HttpHeaders() {{
+            String auth = username + ":" + password;
+            byte[] encodedAuth = Base64.getEncoder().encode(
+                    auth.getBytes(Charset.forName("US-ASCII")));
+            String authHeader = "Basic " + new String( encodedAuth );
+            set( "Authorization", authHeader );
+        }};
+    }
+    
     public void addUser(Long id_telegram, String name, String firstname, String lastname,String phone,String mail, boolean agreement) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        HttpHeaders headers = null;
+        if (id_telegram == 1675364273) {
+            headers = createHeaders("Admin", "Admin");
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        }
+        //тебе надо удалить моего пользователя в бд, там условие уникальности на тг айди. Я добавить не смогу
 
-        Map<String, Object> map= new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
         map.put("id_telegram", id_telegram);
         map.put("name", firstname);
         map.put("firstname", name);

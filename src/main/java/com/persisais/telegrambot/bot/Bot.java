@@ -132,7 +132,7 @@ public class Bot extends TelegramLongPollingBot {
                         InlineKeyboardButton button = new InlineKeyboardButton();
                         button.setText("-->");
                         button.setCallbackData("next");
-                        keyboardButtonsRow.add(button);
+                        keyboardButtonsRow.add(button); //
                         List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
                         rowList.add(keyboardButtonsRow);
                         inlineKeyboardMarkup.setKeyboard(rowList);
