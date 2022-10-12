@@ -35,4 +35,14 @@ public class TovarDto {
     @JsonProperty("photo")
     private String photo;
 
+    @Override
+    public String toString () {
+       return ("Номер товара: "+ id+"" +
+               "\nНазвание товара: "+name +
+               "\nКатегория: " + category.getName() +
+               "\nЦена:" + cost +
+               "₽\nОписание: " + description +
+               "\nФото: " + photo);
+    }
+
 }
