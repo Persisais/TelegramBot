@@ -12,7 +12,6 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.*;
 
-
 import static com.sun.scenario.Settings.set;
 
 @Component
@@ -85,11 +84,29 @@ public class BotService {
         Long id_user = user.getId();
         //TovarDto tovar = getTovarById(id_tovar, id_telegram);
         Map<String, Object> map= new HashMap<>();
+        Map<String, Object> internalMap= new HashMap<>();
+        //ты уверен что это всё, что я должен в body отправить?
+        internalMap.put("id",id_tovar);
         map.put("quantity", quantity);
-        map.put("id",id_tovar);
+        map.put("tovar", internalMap);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
 
         ResponseEntity<String> response = restTemplate.postForEntity(http5+id_user, entity, String.class);
+    }
+    public void addToRemind(Long id_telegram, int id_tovar, int quantity) {
+        HttpHeaders headers = new HttpHeaders();
+        headers = createHeaders(id_telegram);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        UsersDto user = getUserByTg(id_telegram);
+        Long id_user = user.getId();
+        //TovarDto tovar = getTovarById(id_tovar, id_telegram);
+        Map<String, Object> map= new HashMap<>();
+        Map<String, Object> internalMap= new HashMap<>();
+        internalMap.put("id",id_tovar);
+        map.put("tovar", internalMap);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
+        ResponseEntity<String> response = restTemplate.postForEntity(httpPostRemind+id_user+"?quantity="+quantity, entity, String.class);
     }
 
     public UsersDto getUserByTg(Long id_telegram) {
@@ -175,19 +192,7 @@ public class BotService {
         return response;
     }
 
-    public void addToRemind(Long id_telegram, int id_tovar, int quantity) {
-        HttpHeaders headers = new HttpHeaders();
-        headers = createHeaders(id_telegram);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        UsersDto user = getUserByTg(id_telegram);
-        Long id_user = user.getId();
-        //TovarDto tovar = getTovarById(id_tovar, id_telegram);
-        Map<String, Object> map= new HashMap<>();
-        map.put("id",id_tovar);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
-        ResponseEntity<String> response = restTemplate.postForEntity(httpPostRemind+id_user+"?quantity="+quantity, entity, String.class);
-    }
+
 
     public CategoryDto[] getCategories(Long id_telegram) {
         HttpHeaders headers = new HttpHeaders();

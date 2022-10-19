@@ -173,7 +173,7 @@ public class Bot extends TelegramLongPollingBot {
                         sendMsg(message, category.getName()+"\n"+category.getDescription());
                     }
                     break;
-                case "/get_favourites":
+                case "/get_remind":
                     tovarArr = botService.getRemind(Long.valueOf(message.getFrom().getId()));
                     for (TovarDto tovar : tovarArr) {
                         sendMsg(message, tovar.toString());
@@ -197,7 +197,10 @@ public class Bot extends TelegramLongPollingBot {
                 answerCallbackQuery(callbackQuery, "Показываю следующие товары (нет)");
             }
             else if (command.startsWith("fav")) {
+                System.out.println(command+" "+command.substring(3));
+                botService.addToRemind(Long.valueOf(callbackQuery.getFrom().getId()),Integer.parseInt(command.substring(3)), 1);
                 answerCallbackQuery(callbackQuery, "Добавил товар "+command.substring(3)+" в любимое");
+
             }
             else {
                 botService.addToCart(Long.valueOf(callbackQuery.getFrom().getId()),Integer.parseInt(command),1);
