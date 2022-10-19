@@ -63,8 +63,8 @@ public class BotService {
 
         Map<String, Object> map = new HashMap<>();
         map.put("id_telegram", id_telegram);
-        map.put("name", firstname);
-        map.put("firstname", name);
+        map.put("name", name);
+        map.put("firstname", firstname);
         map.put("lastname", lastname);
         map.put("phone", phone);
         map.put("mail", mail);
@@ -100,11 +100,8 @@ public class BotService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         UsersDto user = getUserByTg(id_telegram);
         Long id_user = user.getId();
-        //TovarDto tovar = getTovarById(id_tovar, id_telegram);
         Map<String, Object> map= new HashMap<>();
-        Map<String, Object> internalMap= new HashMap<>();
-        internalMap.put("id",id_tovar);
-        map.put("tovar", internalMap);
+        map.put("id",id_tovar);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(httpPostRemind+id_user+"?quantity="+quantity, entity, String.class);
     }
