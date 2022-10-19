@@ -1,5 +1,7 @@
 package com.persisais.telegrambot.Service;
 
+import com.persisais.telegrambot.model.CategoryDataDto;
+import com.persisais.telegrambot.model.CategoryDto;
 import com.persisais.telegrambot.model.TovarDto;
 import com.persisais.telegrambot.model.UsersDto;
 import org.springframework.http.*;
@@ -22,12 +24,27 @@ public class BotService {
     public String http3 = "http://localhost:8080/api/tovar/id/";
     public String http4 = "http://localhost:8080/api/tovar/get/category";
     public String http5 = "http://localhost:8080/api/carts/";
-    public String http6 = "http://localhost:8080/api/users/tg/";
-    //можем пока хотя бы админа прикрутить
+    public String http6 = "http://localhost:8080/api/users/get/tg/";
+    public String httpGetCart ="http://localhost:8080/api/carts/get/";
+    public String httpGetCategories = "http://localhost:8080/api/category/get";
+    public String httpGetRemind = "http://localhost:8080/api/remind/get/";
+    public String httpPostRemind = "http://localhost:8080/api/remind/";
 
 
-    HttpHeaders createHeaders(String username, String password){
+
+    HttpHeaders createHeaders(Long id_telegram){
         return new HttpHeaders() {{
+            String username, password;
+            if (id_telegram == 1675364273) {
+                username = "Admin";
+                password = "Admin";
+                System.out.println("Админ замечен");
+            }
+            else {
+                username = "User";
+                password = "User";
+                System.out.println("Юзер замечен");
+            }
             String auth = username + ":" + password;
             byte[] encodedAuth = Base64.getEncoder().encode(
                     auth.getBytes(Charset.forName("US-ASCII")));
@@ -37,21 +54,13 @@ public class BotService {
     }
 
 
-    
+
     public void addUser(Long id_telegram, String name, String firstname, String lastname,String phone,String mail, boolean agreement) {
         HttpHeaders headers = null;
-
-        if (id_telegram == 1675364273) {
-            headers = createHeaders("Admin", "Admin");
-        }
-        else {
-            headers = createHeaders("User", "User");
-        }
-
+        headers = createHeaders(id_telegram);
 
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        //тебе надо удалить моего пользователя в бд, там условие уникальности на тг айди. Я добавить не смогу
 
         Map<String, Object> map = new HashMap<>();
         map.put("id_telegram", id_telegram);
@@ -61,7 +70,6 @@ public class BotService {
         map.put("phone", phone);
         map.put("mail", mail);
         map.put("agreement", agreement);
-        //прст проект открыть
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
 
@@ -70,44 +78,53 @@ public class BotService {
 
     public void addToCart(Long id_telegram, int id_tovar, int quantity) {
         HttpHeaders headers = new HttpHeaders();
+        headers = createHeaders(id_telegram);
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         UsersDto user = getUserByTg(id_telegram);
         Long id_user = user.getId();
-        TovarDto tovar = getTovarById(id_tovar);
+        //TovarDto tovar = getTovarById(id_tovar, id_telegram);
         Map<String, Object> map= new HashMap<>();
-        map.put("cart", map.put("user", user));
         map.put("quantity", quantity);
-        map.put("tovar",tovar);
+        map.put("id",id_tovar);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
 
         ResponseEntity<String> response = restTemplate.postForEntity(http5+id_user, entity, String.class);
     }
 
     public UsersDto getUserByTg(Long id_telegram) {
+        HttpHeaders headers = new HttpHeaders();
+        headers = createHeaders(id_telegram);
+        HttpEntity request = new HttpEntity(headers);
         UsersDto response = null;
         try {
-            response = restTemplate.getForObject(new URI(http6+id_telegram), UsersDto.class);
+            response = restTemplate.exchange(new URI(http6+id_telegram), HttpMethod.GET, request, UsersDto.class).getBody();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return response;
     }
 
-    public TovarDto[] getTovar() {
+    public TovarDto[] getTovar(Long id_telegram) {
+        HttpHeaders headers = new HttpHeaders();
+        headers = createHeaders(id_telegram);
+        HttpEntity request = new HttpEntity(headers);
         TovarDto[] response = null;
                 try {
-            response = restTemplate.getForObject(new URI(http2), TovarDto[].class);
+            response = restTemplate.exchange(new URI(http2), HttpMethod.GET, request,  TovarDto[].class).getBody();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return response;
     }
 
-    public TovarDto[] getTovarByCategory() {
+    public TovarDto[] getTovarByCategory(Long id_telegram) {
+        HttpHeaders headers = new HttpHeaders();
+        headers = createHeaders(id_telegram);
+        HttpEntity request = new HttpEntity(headers);
         TovarDto[] response = null;
         try {
-            response = restTemplate.getForObject(new URI(http4), TovarDto[].class);
+            response = restTemplate.exchange(new URI(http4), HttpMethod.GET, request, TovarDto[].class).getBody();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -115,28 +132,75 @@ public class BotService {
     }
 
 
-    public TovarDto getTovarById(int id) {
+    public TovarDto getTovarById(int id, Long id_telegram) {
+        HttpHeaders headers = new HttpHeaders();
+        headers = createHeaders(id_telegram);
+        HttpEntity request = new HttpEntity(headers);
         TovarDto response = null;
         try {
-            response = restTemplate.getForObject(new URI(http3+id), TovarDto.class);
+            response = restTemplate.exchange(new URI(http3+id), HttpMethod.GET, request, TovarDto.class).getBody();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return response;
     }
 
-    /*
-    public CategoryDataDto getCategories() {
-        CategoryDataDto response = null;
+    public TovarDto[] getCart(Long id_telegram) {
+        HttpHeaders headers = new HttpHeaders();
+        headers = createHeaders(id_telegram);
+        UsersDto user = getUserByTg(id_telegram);
+        Long id_user = user.getId();
+        HttpEntity request = new HttpEntity(headers);
+        TovarDto[] response = null;
         try {
-            response = restTemplate.getForObject(new URI(http3), CategoryDataDto.class);
+            response = restTemplate.exchange(new URI(httpGetCart+id_user), HttpMethod.GET, request, TovarDto[].class).getBody();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return response;
     }
-     */
 
+    public TovarDto[] getRemind(Long id_telegram) {
+        HttpHeaders headers = new HttpHeaders();
+        headers = createHeaders(id_telegram);
+        UsersDto user = getUserByTg(id_telegram);
+        Long id_user = user.getId();
+        HttpEntity request = new HttpEntity(headers);
+        TovarDto[] response = null;
+        try {
+            response = restTemplate.exchange(new URI(httpGetRemind+id_user), HttpMethod.GET, request, TovarDto[].class).getBody();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return response;
+    }
+
+    public void addToRemind(Long id_telegram, int id_tovar, int quantity) {
+        HttpHeaders headers = new HttpHeaders();
+        headers = createHeaders(id_telegram);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        UsersDto user = getUserByTg(id_telegram);
+        Long id_user = user.getId();
+        //TovarDto tovar = getTovarById(id_tovar, id_telegram);
+        Map<String, Object> map= new HashMap<>();
+        map.put("id",id_tovar);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
+        ResponseEntity<String> response = restTemplate.postForEntity(httpPostRemind+id_user+"?quantity="+quantity, entity, String.class);
+    }
+
+    public CategoryDto[] getCategories(Long id_telegram) {
+        HttpHeaders headers = new HttpHeaders();
+        headers = createHeaders(id_telegram);
+        HttpEntity request = new HttpEntity(headers);
+        CategoryDto[] response = null;
+        try {
+            response = restTemplate.exchange(new URI(httpGetCategories), HttpMethod.GET, request, CategoryDto[].class).getBody();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return response;
+    }
 
 
 }
