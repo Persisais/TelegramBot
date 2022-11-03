@@ -5,6 +5,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.awt.*;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -15,6 +16,7 @@ import static com.sun.scenario.Settings.set;
 public class BotService {
 
     public RestTemplate restTemplate = new RestTemplate();
+
     public String http = "http://localhost:8080/api/users";
     public String http2 = "http://localhost:8080/api/tovar/get";
     public String http3 = "http://localhost:8080/api/tovar/id/";
@@ -25,6 +27,8 @@ public class BotService {
     public String httpGetCategories = "http://localhost:8080/api/category/get";
     public String httpGetRemind = "http://localhost:8080/api/remind/get/";
     public String httpPostRemind = "http://localhost:8080/api/remind/";
+
+    public String httpGetPhoto = "http://localhost:8080/api/tovar/get/img/";
 
 
 
@@ -80,6 +84,8 @@ public class BotService {
         internalMap.put("id",id_tovar);
         map.put("quantity", quantity);
         map.put("tovar", internalMap);
+        //ты этот запрос менял? Раньше там надо было айди товара передавать в tovar {id }
+        //
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
 
         ResponseEntity<String> response = restTemplate.postForEntity(http5+id_telegram, entity, String.class);
@@ -97,6 +103,7 @@ public class BotService {
     public UsersDto getUserByTg(Long id_telegram) {
         HttpHeaders headers = createHeaders(id_telegram);
         HttpEntity request = new HttpEntity(headers);
+
         UsersDto response = null;
         try {
             response = restTemplate.exchange(new URI(http6+id_telegram), HttpMethod.GET, request, UsersDto.class).getBody();
@@ -112,6 +119,19 @@ public class BotService {
         TovarDto[] response = null;
                 try {
             response = restTemplate.exchange(new URI(http2), HttpMethod.GET, request,  TovarDto[].class).getBody();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return response;
+    }
+
+    public Image getTovarImage(Long id_telegram, Long id) {
+        HttpHeaders headers = createHeaders(id_telegram);
+        HttpEntity request = new HttpEntity(headers);
+        Image response = null;
+        try {
+            response = restTemplate.exchange(new URI(httpGetPhoto+id), HttpMethod.GET, request,  Image.class).getBody();
+            //
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -1,8 +1,10 @@
 package com.persisais.telegrambot.bot;
 
 import com.persisais.telegrambot.Service.BotService;
+import com.persisais.telegrambot.Service.ImageConverter;
 import com.persisais.telegrambot.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
@@ -18,6 +20,11 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import javax.security.auth.callback.Callback;
+import java.awt.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +33,7 @@ public class Bot extends TelegramLongPollingBot {
 
     @Autowired
     private BotService botService;
+    public ImageConverter imageConverter = new ImageConverter();
 
     @Override
     public String getBotUsername() {
@@ -154,9 +162,30 @@ public class Bot extends TelegramLongPollingBot {
 
                             InputMedia photo = new InputMediaPhoto();
                             if (tovarArr[j].getPhoto()!=null) {
-                                //TODO картинки
-                                //photo.setMedia(tovarArr[j].getPhoto());
+                                //String pathname;
+                                //Image image = botService.getTovarImage(Long.valueOf(message.getFrom().getId()), tovarArr[j].getId());
+                                //System.out.println("11231321"+image);
                                 photo.setMedia(emptyImage);
+
+
+                                /*
+                                try {
+                                    pathname = imageConverter.convertToFile(tovarArr[j].getPhoto(), tovarArr[j].getId());
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                                //TODO картинки
+                                try {
+                                    photo.setMedia(new FileInputStream(new File(pathname)), tovarArr[j].getId().toString());
+
+                                    photo.setMedia
+                                } catch (FileNotFoundException e) {
+                                    throw new RuntimeException(e);
+                                }
+                                //photo.setMedia(tovarArr[j].getPhoto());
+
+
+                                 */
                             }
                             else {
                                 photo.setMedia(emptyImage);
