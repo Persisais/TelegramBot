@@ -7,6 +7,9 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
+import java.nio.charset.StandardCharsets;
 
 @Data
 @NoArgsConstructor
@@ -33,7 +36,7 @@ public class TovarDto {
     private String description;
 
     @JsonProperty("photo")
-    private String photo;
+    private byte[] photo;
 
     @Override
     public String toString () {
@@ -41,8 +44,7 @@ public class TovarDto {
                "\nНазвание товара: "+name +
                "\nКатегория: " + category.getName() +
                "\nЦена:" + cost +
-               "₽\nОписание: " + description +
-               "\nФото: " + photo);
+               "₽\nОписание: " + description);
     }
 
 }

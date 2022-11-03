@@ -1,17 +1,18 @@
 package com.persisais.telegrambot.bot;
 
 import com.persisais.telegrambot.Service.BotService;
-import com.persisais.telegrambot.model.CategoryDataDto;
-import com.persisais.telegrambot.model.CategoryDto;
-import com.persisais.telegrambot.model.TovarDto;
+import com.persisais.telegrambot.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
+import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -42,7 +43,6 @@ public class Bot extends TelegramLongPollingBot {
         sendMessage.setChatId(message.getChatId().toString());
         sendMessage.setReplyToMessageId(message.getMessageId());
         sendMessage.setText(text);
-
         try {
             execute(sendMessage);
         } catch (TelegramApiException e) {
@@ -64,6 +64,19 @@ public class Bot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
     }
+
+    public void sendMediaGroup(Message message, List<InputMedia> media) {
+        SendMediaGroup sendMediaGroup = new SendMediaGroup();
+        sendMediaGroup.setChatId(message.getChatId().toString());
+        sendMediaGroup.setReplyToMessageId(message.getMessageId());
+        sendMediaGroup.setMedias(media);
+        try {
+            execute(sendMediaGroup);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void answerCallbackQuery(CallbackQuery callbackQuery, String text) {
         AnswerCallbackQuery answer = new AnswerCallbackQuery();
@@ -113,6 +126,7 @@ public class Bot extends TelegramLongPollingBot {
                     sendMsg(message, "Я тебя запомнил");
                     break;
                 case "/get_tovar":
+                    String emptyImage = "https://www.ponycorral.ca/wp-content/uploads/2015/07/placeholder-image-1000x1000-150x150.png";
                     tovarArr = botService.getTovar(Long.valueOf(message.getFrom().getId()));
                     int l, r;
                     for (int i=0; i< (int)Math.ceil(tovarArr.length/5.0); i++) {
@@ -124,6 +138,7 @@ public class Bot extends TelegramLongPollingBot {
                         //ArrayList<InlineKeyboardButton> buttonsArray = new ArrayList<>();
                         List<InlineKeyboardButton> keyboardButtonsRow= new ArrayList<>();
                         List<InlineKeyboardButton> keyboardButtonsSecondRow= new ArrayList<>();
+                        List<InputMedia> media = new ArrayList<>();
                         for (int j=l; j<r; j++) {
                             messageText+=tovarArr[j].toString()+"\n----------------\n";
                             InlineKeyboardButton button = new InlineKeyboardButton();
@@ -137,9 +152,23 @@ public class Bot extends TelegramLongPollingBot {
                             buttonSecond.setCallbackData("fav"+tovarArr[j].getId().toString());
                             keyboardButtonsSecondRow.add(buttonSecond);
 
+                            InputMedia photo = new InputMediaPhoto();
+                            if (tovarArr[j].getPhoto()!=null) {
+                                //TODO картинки
+                                //photo.setMedia(tovarArr[j].getPhoto());
+                                photo.setMedia(emptyImage);
+                            }
+                            else {
+                                photo.setMedia(emptyImage);
+                            }
+                            photo.setMediaName(tovarArr[j].getId().toString());
+                            photo.setCaption(tovarArr[j].toString());
+                            media.add(photo);
+
                         }
                         if (r!=tovarArr.length) {
                             InlineKeyboardButton button = new InlineKeyboardButton();
+
                             button.setText("-->");
                             button.setCallbackData("next");
                             keyboardButtonsRow.add(button);
@@ -148,8 +177,8 @@ public class Bot extends TelegramLongPollingBot {
                         rowList.add(keyboardButtonsRow);
                         rowList.add(keyboardButtonsSecondRow);
                         inlineKeyboardMarkup.setKeyboard(rowList);
-                        System.out.println(messageText);
                         sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+                        sendMediaGroup(message, media);
                         //sendMsg(message, messageText);
                     }
                     /*
@@ -161,6 +190,7 @@ public class Bot extends TelegramLongPollingBot {
 
                     break;
                 case "/get_tovar_by_cat":
+                    //TODO Объединить с get_categories
                     tovarArr = botService.getTovarByCategory(Long.valueOf(message.getFrom().getId()));
                     for (TovarDto tovar : tovarArr) {
                         sendMsg(message, tovar.toString());
@@ -168,21 +198,22 @@ public class Bot extends TelegramLongPollingBot {
                     break;
 
                 case "/get_categories":
+                    //TODO Объединить с get_tovar_by_cat
                     CategoryDto[] categoryArr =botService.getCategories(Long.valueOf(message.getFrom().getId()));
                     for (CategoryDto category: categoryArr) {
                         sendMsg(message, category.getName()+"\n"+category.getDescription());
                     }
                     break;
                 case "/get_remind":
-                    tovarArr = botService.getRemind(Long.valueOf(message.getFrom().getId()));
-                    for (TovarDto tovar : tovarArr) {
-                        sendMsg(message, tovar.toString());
+                    RemindDto[] remindArr = botService.getRemind(Long.valueOf(message.getFrom().getId()));
+                    for (RemindDto remind : remindArr) {
+                        sendMsg(message, remind.toString());
                     }
                     break;
                 case "/get_cart":
-                    tovarArr = botService.getCart(Long.valueOf(message.getFrom().getId()));
-                    for (TovarDto tovar : tovarArr) {
-                        sendMsg(message, tovar.toString());
+                    TrashDto[] trashArr= botService.getCart(Long.valueOf(message.getFrom().getId()));
+                    for (TrashDto trash : trashArr) {
+                        sendMsg(message, trash.toString());
                     }
                     break;
                 default:
@@ -194,6 +225,7 @@ public class Bot extends TelegramLongPollingBot {
             String command = update.getCallbackQuery().getData();
             CallbackQuery callbackQuery = update.getCallbackQuery();
             if (command.equals("next")) {
+                //TODO
                 answerCallbackQuery(callbackQuery, "Показываю следующие товары (нет)");
             }
             else if (command.startsWith("fav")) {
