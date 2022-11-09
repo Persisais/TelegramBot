@@ -22,7 +22,7 @@ public class BotService {
     public String http = "http://localhost:8080/api/users";
     public String http2 = "http://localhost:8080/api/tovar/get";
     public String http3 = "http://localhost:8080/api/tovar/id/";
-    public String http4 = "http://localhost:8080/api/tovar/get/category";
+    public String http4 = "http://localhost:8080/api/tovar/get/category/";
     public String http5 = "http://localhost:8080/api/carts/";
     public String http6 = "http://localhost:8080/api/users/get/tg/";
     public String httpGetCart ="http://localhost:8080/api/carts/get/";
@@ -135,13 +135,13 @@ public class BotService {
         return response;
     }
 
-    public TovarDto[] getTovarByCategory(Long id_telegram) {
+    public TovarDto[] getTovarByCategory(Long id_telegram, long id_category) {
         HttpHeaders headers = createHeaders(id_telegram);
         HttpEntity request = new HttpEntity(headers);
         TovarDto[] response = null;
         try {
             //TODO Выбор категории на кнопку
-            response = restTemplate.exchange(new URI(http4)+"/1", HttpMethod.GET, request, TovarDto[].class).getBody();
+            response = restTemplate.exchange(new URI(http4+id_category), HttpMethod.GET, request, TovarDto[].class).getBody();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -183,8 +183,6 @@ public class BotService {
         }
         return response;
     }
-
-
 
     public CategoryDto[] getCategories(Long id_telegram) {
         HttpHeaders headers = createHeaders(id_telegram);
