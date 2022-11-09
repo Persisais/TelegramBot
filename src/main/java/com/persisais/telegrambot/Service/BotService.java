@@ -1,6 +1,7 @@
 package com.persisais.telegrambot.Service;
 
 import com.persisais.telegrambot.model.*;
+import org.apache.http.HttpResponse;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -8,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 import java.awt.*;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.sql.Blob;
 import java.util.*;
 
 import static com.sun.scenario.Settings.set;
@@ -78,16 +80,12 @@ public class BotService {
         HttpHeaders headers = createHeaders(id_telegram);
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        //TovarDto tovar = getTovarById(id_tovar, id_telegram);
         Map<String, Object> map= new HashMap<>();
         Map<String, Object> internalMap= new HashMap<>();
         internalMap.put("id",id_tovar);
         map.put("quantity", quantity);
         map.put("tovar", internalMap);
-        //ты этот запрос менял? Раньше там надо было айди товара передавать в tovar {id }
-        //
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
-
         ResponseEntity<String> response = restTemplate.postForEntity(http5+id_telegram, entity, String.class);
     }
     public void addToRemind(Long id_telegram, int id_tovar, int quantity) {
@@ -125,13 +123,12 @@ public class BotService {
         return response;
     }
 
-    public Image getTovarImage(Long id_telegram, Long id) {
+    public byte[] getTovarImage(Long id_telegram, Long id) {
         HttpHeaders headers = createHeaders(id_telegram);
         HttpEntity request = new HttpEntity(headers);
-        Image response = null;
+        byte[] response = null;
         try {
-            response = restTemplate.exchange(new URI(httpGetPhoto+id), HttpMethod.GET, request,  Image.class).getBody();
-            //
+            response = restTemplate.exchange(new URI(httpGetPhoto+id), HttpMethod.GET, request,  byte[].class).getBody();
         } catch (Exception e) {
             e.printStackTrace();
         }

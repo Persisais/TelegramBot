@@ -3,6 +3,7 @@ package com.persisais.telegrambot.bot;
 import com.persisais.telegrambot.Service.BotService;
 import com.persisais.telegrambot.Service.ImageConverter;
 import com.persisais.telegrambot.model.*;
+import org.apache.http.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,10 +102,6 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-
-
-
-
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
@@ -162,30 +162,19 @@ public class Bot extends TelegramLongPollingBot {
 
                             InputMedia photo = new InputMediaPhoto();
                             if (tovarArr[j].getPhoto()!=null) {
-                                //String pathname;
-                                //Image image = botService.getTovarImage(Long.valueOf(message.getFrom().getId()), tovarArr[j].getId());
-                                //System.out.println("11231321"+image);
-                                photo.setMedia(emptyImage);
-
-
-                                /*
+                                String pathname ="images/";
+                                byte[] image = botService.getTovarImage(Long.valueOf(message.getFrom().getId()), tovarArr[j].getId());
                                 try {
-                                    pathname = imageConverter.convertToFile(tovarArr[j].getPhoto(), tovarArr[j].getId());
+                                    Files.write(Paths.get(pathname+tovarArr[j].getId()+".png"), image);
                                 } catch (IOException e) {
                                     throw new RuntimeException(e);
                                 }
-                                //TODO картинки
-                                try {
-                                    photo.setMedia(new FileInputStream(new File(pathname)), tovarArr[j].getId().toString());
-
-                                    photo.setMedia
-                                } catch (FileNotFoundException e) {
-                                    throw new RuntimeException(e);
-                                }
-                                //photo.setMedia(tovarArr[j].getPhoto());
-
-
-                                 */
+                                photo.setMedia(new File(pathname+tovarArr[j].getId()+".png"), tovarArr[j].getId().toString());
+//                                try {
+//                                    photo.setMedia( new FileInputStream("images/"+tovarArr[j].getId()+".png"), tovarArr[j].getId().toString());
+//                                } catch (FileNotFoundException e) {
+//                                    throw new RuntimeException(e);
+//                                }
                             }
                             else {
                                 photo.setMedia(emptyImage);
@@ -193,11 +182,9 @@ public class Bot extends TelegramLongPollingBot {
                             photo.setMediaName(tovarArr[j].getId().toString());
                             photo.setCaption(tovarArr[j].toString());
                             media.add(photo);
-
                         }
                         if (r!=tovarArr.length) {
                             InlineKeyboardButton button = new InlineKeyboardButton();
-
                             button.setText("-->");
                             button.setCallbackData("next");
                             keyboardButtonsRow.add(button);
@@ -218,7 +205,7 @@ public class Bot extends TelegramLongPollingBot {
 
 
                     break;
-                case "/get_tovar_by_cat":
+                case "/get_tovar_by_category":
                     //TODO Объединить с get_categories
                     tovarArr = botService.getTovarByCategory(Long.valueOf(message.getFrom().getId()));
                     for (TovarDto tovar : tovarArr) {
@@ -227,11 +214,13 @@ public class Bot extends TelegramLongPollingBot {
                     break;
 
                 case "/get_categories":
-                    //TODO Объединить с get_tovar_by_cat
+                    //TODO Объединить с get_tovar_by_catq
                     CategoryDto[] categoryArr =botService.getCategories(Long.valueOf(message.getFrom().getId()));
+                    String messageText = "*Категории:*\n";
                     for (CategoryDto category: categoryArr) {
-                        sendMsg(message, category.getName()+"\n"+category.getDescription());
+                        messageText += category.getName()+"\n"+category.getDescription()+"\n----------------\n";
                     }
+                    sendMsg(message, messageText);
                     break;
                 case "/get_remind":
                     RemindDto[] remindArr = botService.getRemind(Long.valueOf(message.getFrom().getId()));
