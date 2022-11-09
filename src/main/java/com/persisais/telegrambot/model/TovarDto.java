@@ -40,11 +40,11 @@ public class TovarDto {
 
     @Override
     public String toString () {
-       return ("Номер товара: "+ id+"" +
-               "\nНазвание товара: "+name +
-               "\nКатегория: " + category.getName() +
-               "\nЦена:" + cost +
-               "₽\nОписание: " + description);
+       return ("*Номер товара:* "+ id+"" +
+               "\n*Название товара: *"+name +
+               "\n*Категория: *" + category.getName() +
+               "\n*Цена: *" + cost +
+               "_ ₽_\n*Описание:* " + description);
     }
 
 }

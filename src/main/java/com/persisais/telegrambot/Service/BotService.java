@@ -1,18 +1,16 @@
 package com.persisais.telegrambot.Service;
 
 import com.persisais.telegrambot.model.*;
-import org.apache.http.HttpResponse;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.awt.*;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.sql.Blob;
-import java.util.*;
-
-import static com.sun.scenario.Settings.set;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class BotService {

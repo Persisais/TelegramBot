@@ -28,7 +28,7 @@ public class RemindDto {
     private int quantity;
 
     public String toString () {
-        return ("Товар в избранном: \n"+tovar +
-                "\nКоличество: " + quantity);
+        return ("*Товар в избранном: *\n"+tovar +
+                "\n*Количество: *" + quantity);
     }
 }

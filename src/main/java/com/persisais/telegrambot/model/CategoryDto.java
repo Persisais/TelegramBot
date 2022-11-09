@@ -20,4 +20,11 @@ public class CategoryDto {
 
     @JsonProperty("description")
     private String description;
+
+    @Override
+    public String toString () {
+        return ("*Номер категории:* "+ id+"" +
+                "\n*Название категории:* "+name +
+                "\n*Описание:* " + description);
+    }
 }

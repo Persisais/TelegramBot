@@ -26,7 +26,7 @@ public class TrashDto {
 
     @Override
     public String toString () {
-        return ("Товар: \n"+tovar +
-                "\nКоличество: " + quantity);
+        return ("*Товар: *\n"+tovar +
+                "\n*Количество: *" + quantity);
     }
 }
