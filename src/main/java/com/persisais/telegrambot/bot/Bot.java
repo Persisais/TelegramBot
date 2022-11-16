@@ -8,6 +8,7 @@ import com.persisais.telegrambot.model.TovarDto;
 import com.persisais.telegrambot.model.TrashDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpServerErrorException;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
@@ -174,17 +175,24 @@ public class Bot extends TelegramLongPollingBot {
 
             if (actions.get(message.getFrom().getId())!=null && message.getText().chars().allMatch( Character::isDigit )) {
                 ActionInfo action = actions.get(message.getFrom().getId());
-                if (action.getActionTypeId()==0) {
-                    botService.addToCart(message.getFrom().getId(),action.getTovarId(),Integer.parseInt(message.getText()));
-                    sendMsg(message, "Добавил товар №"+action.getTovarId()+" в количесте "+message.getText()+" в корзину");
-                    //TODO проверка на количество
-                    actions.remove(message.getFrom().getId());
+                try {
+                    if (action.getActionTypeId()==0) {
+                        botService.addToCart(message.getFrom().getId(),action.getTovarId(),Integer.parseInt(message.getText()));
+                        sendMsg(message, "Добавил товар №"+action.getTovarId()+" в количесте "+message.getText()+" в корзину");
+                        //TODO проверка на количество
+                        actions.remove(message.getFrom().getId());
+                    }
+                    else if (action.getActionTypeId()==1) {
+                        botService.addToRemind(message.getFrom().getId(), action.getTovarId(), Integer.parseInt(message.getText()));
+                        sendMsg(message, "Добавил товар №" + action.getTovarId() + " в количесте " + message.getText() + " в избранное");
+                        actions.remove(message.getFrom().getId());
+                    }
                 }
-                else if (action.getActionTypeId()==1) {
-                    botService.addToRemind(message.getFrom().getId(),action.getTovarId(),Integer.parseInt(message.getText()));
-                    sendMsg(message, "Добавил товар №"+action.getTovarId()+" в количесте "+message.getText()+" в избранное");
-                    actions.remove(message.getFrom().getId());
+                catch (HttpServerErrorException e) {
+                    //TODO посмотреть мб другую ошибку
+                    sendMsg(message,"У нас нет столько товара на складе");
                 }
+
 
             }
             else {
