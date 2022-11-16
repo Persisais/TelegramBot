@@ -27,8 +27,8 @@ public class BotService {
     public String httpGetCategories = "http://localhost:8080/api/category/get";
     public String httpGetRemind = "http://localhost:8080/api/remind/get/";
     public String httpPostRemind = "http://localhost:8080/api/remind/";
-
     public String httpGetPhoto = "http://localhost:8080/api/tovar/get/img/";
+    public String httpBuy = "http://localhost:8080/api/tovar/get/img/";
 
 
 
@@ -87,6 +87,7 @@ public class BotService {
         ResponseEntity<String> response = restTemplate.postForEntity(http5+id_telegram, entity, String.class);
     }
     public void addToRemind(Long id_telegram, int id_tovar, int quantity) {
+        // TODO id_tovar в Long
         HttpHeaders headers = createHeaders(id_telegram);
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
