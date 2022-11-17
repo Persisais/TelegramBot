@@ -40,4 +40,24 @@ public class UsersDto {
         return this.agreement;
     }
 
+    public String getCurrentAgreementSmile () {
+        String noSmile = "❌";
+        String yesSmile ="✅";
+        String currentSmile = agreement ? yesSmile : noSmile;
+        return currentSmile;
+    }
+
+    @Override
+    public String toString () {
+
+
+
+        return ("*Ник:* "+ name +
+                "\n*Имя: *"+firstname +
+                "\n*Фамилия: *" + lastname +
+                "\n*Номер: *" + phone +
+                "\n*Почта:* " + mail +
+                "\n*Согласие: *" + getCurrentAgreementSmile());
+    }
+
 }

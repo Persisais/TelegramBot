@@ -29,6 +29,7 @@ public class BotService {
     public String httpPostRemind = "http://localhost:8080/api/remind/";
     public String httpGetPhoto = "http://localhost:8080/api/tovar/get/img/";
     public String httpBuy = "http://localhost:8080/api/tovar/get/img/";
+    public String httpChangeUser = "http://localhost:8080/api/users/update";
 
 
 
@@ -72,6 +73,65 @@ public class BotService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
 
         ResponseEntity<String> response = restTemplate.postForEntity(http, entity, String.class);
+    }
+
+    public void changeUser(Long id_telegram, String name, String firstname, String lastname) {
+        HttpHeaders headers = createHeaders(id_telegram);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        Map<String, Object> map = new HashMap<>();
+        map.put("id_telegram", id_telegram);
+        map.put("name", name);
+        map.put("firstname", firstname);
+        map.put("lastname", lastname);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(new URI(httpChangeUser), HttpMethod.PUT, entity, String.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void changeUser(Long id_telegram, String phone) {
+        HttpHeaders headers = createHeaders(id_telegram);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        Map<String, Object> map = new HashMap<>();
+        map.put("id_telegram", id_telegram);
+        map.put("phone", phone);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(new URI(httpChangeUser), HttpMethod.PUT, entity, String.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void changeUser(String mail, Long id_telegram) {
+        HttpHeaders headers = createHeaders(id_telegram);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        Map<String, Object> map = new HashMap<>();
+        map.put("id_telegram", id_telegram);
+        map.put("mail", mail);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(new URI(httpChangeUser), HttpMethod.PUT, entity, String.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void changeUser(Long id_telegram, boolean agreement) {
+        HttpHeaders headers = createHeaders(id_telegram);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        Map<String, Object> map = new HashMap<>();
+        map.put("id_telegram", id_telegram);
+        map.put("agreement", agreement);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(new URI(httpChangeUser), HttpMethod.PUT, entity, String.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void addToCart(Long id_telegram, int id_tovar, int quantity) {

@@ -171,6 +171,10 @@ public class Bot extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             Message message = update.getMessage();
             TovarDto[] tovarArr;
+            InlineKeyboardMarkup inlineKeyboardMarkup;
+            List<InlineKeyboardButton> keyboardButtonsRow;
+            List<List<InlineKeyboardButton>> rowList;
+            String messageText;
             int l, r;
 
             if (actions.get(message.getFrom().getId())!=null && message.getText().chars().allMatch( Character::isDigit )) {
@@ -179,7 +183,6 @@ public class Bot extends TelegramLongPollingBot {
                     if (action.getActionTypeId()==0) {
                         botService.addToCart(message.getFrom().getId(),action.getTovarId(),Integer.parseInt(message.getText()));
                         sendMsg(message, "Добавил товар №"+action.getTovarId()+" в количесте "+message.getText()+" в корзину");
-                        //TODO проверка на количество
                         actions.remove(message.getFrom().getId());
                     }
                     else if (action.getActionTypeId()==1) {
@@ -189,8 +192,10 @@ public class Bot extends TelegramLongPollingBot {
                     }
                 }
                 catch (HttpServerErrorException e) {
-                    //TODO посмотреть мб другую ошибку
                     sendMsg(message,"У нас нет столько товара на складе");
+                }
+                catch (NumberFormatException e) {
+                    sendMsg(message,"Вы не можете добавить в корзину больше 32767 единиц товара потому что: \n1) У вас нет столько денег\n2) У вас нет *СТОЛЬКО* денег\n3) У нас на складе нет столько товара");
                 }
 
 
@@ -205,8 +210,35 @@ public class Bot extends TelegramLongPollingBot {
                         sendMsg(message, "Никто тебе не поможет\nБот создан для интернет-магазина\nДоступные команды:\n" +
                                 "/start - начать работу\n/help - помощь\n/setting - настройки\n/random - получить случайное число от 1 до 100");
                         break;
-                    case "/setting":
-                        sendMsg(message, "И что ты хочешь настроить?");
+                    case "/my_info":
+                        messageText = botService.getUserByTg(message.getFrom().getId()).toString();
+                        inlineKeyboardMarkup = new InlineKeyboardMarkup();
+                        rowList = new ArrayList<>();
+                        keyboardButtonsRow= new ArrayList<>();
+                        InlineKeyboardButton buttonUpdateInfo = new InlineKeyboardButton();
+                        buttonUpdateInfo.setText("Обновить");
+                        buttonUpdateInfo.setCallbackData("UpdateUserInfo:"+message.getFrom().getId());
+                        keyboardButtonsRow.add(buttonUpdateInfo);
+
+                        InlineKeyboardButton buttonUpdatePhone = new InlineKeyboardButton();
+                        buttonUpdatePhone.setText("☎️");
+                        buttonUpdatePhone.setCallbackData("UpdateUserPhone:"+message.getFrom().getId());
+                        keyboardButtonsRow.add(buttonUpdatePhone);
+
+                        InlineKeyboardButton buttonUpdateEmail = new InlineKeyboardButton();
+                        buttonUpdateEmail.setText("\uD83D\uDCEB");
+                        buttonUpdateEmail.setCallbackData("UpdateUserEmail:"+message.getFrom().getId());
+                        keyboardButtonsRow.add(buttonUpdateEmail);
+
+                        InlineKeyboardButton buttonUpdateAgreement = new InlineKeyboardButton();
+                        buttonUpdateAgreement.setText(botService.getUserByTg(message.getFrom().getId()).getCurrentAgreementSmile());
+                        buttonUpdateAgreement.setCallbackData("UpdateUserAgreement:"+message.getFrom().getId());
+                        keyboardButtonsRow.add(buttonUpdateAgreement);
+
+                        rowList.add(keyboardButtonsRow);
+                        inlineKeyboardMarkup.setKeyboard(rowList);
+
+                        sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
                         break;
                     case "/random":
                         sendMsg(message, String.valueOf((int) (Math.random() * 100 + 1)));
@@ -228,10 +260,9 @@ public class Bot extends TelegramLongPollingBot {
                         break;
                     case "/get_tovar_by_category":
                         CategoryDto[] categoriesArr = botService.getCategories(message.getFrom().getId());
-                        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-                        List<InlineKeyboardButton> keyboardButtonsRow;
-                        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-                        String messageText="*Категории:*\n";
+                        inlineKeyboardMarkup = new InlineKeyboardMarkup();
+                        rowList = new ArrayList<>();
+                        messageText="*Категории:*\n";
                         for (int i=0; i< (int)Math.ceil(categoriesArr.length/5.0); i++) {
                             System.out.println(i);
                             l= 5*i;
@@ -287,8 +318,6 @@ public class Bot extends TelegramLongPollingBot {
                         messageText+="\n[Ссылочка, которая не работает](http://localhost:8080/buy/1675364273)";
                         messageText+="\n`http://localhost:8080/buy/"+message.getFrom().getId()+"`";
                         //buttonYes.setUrl("http://localhost:8080/buy/"+message.getFrom().getId());
-                        //это должна быть нормальная ссылка, которую может открыть телеграм апи
-                        //1675364273
 
                         //buttonYes.setUrl("yandex.ru");
                         buttonYes.setText("Да");
