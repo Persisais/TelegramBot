@@ -50,7 +50,6 @@
 //        CallbackQuery callbackQuery = update.getCallbackQuery();
 //        String command = update.getCallbackQuery().getData();
 //        if (command.equals("next")) {
-//            //TODO
 //            sender.answerCallbackQuery(callbackQuery, "Показываю следующие товары (нет)");
 //        }
 //        else if (command.startsWith("Category:")) {

@@ -224,7 +224,7 @@ public class Bot extends TelegramLongPollingBot {
                             sendMsg(message, "Вы не можете добавить в корзину больше 32767 единиц товара потому что: \n1) У вас нет столько денег\n2) У вас нет *СТОЛЬКО* денег\n3) У нас на складе нет столько товара");
                         }
                     } else if (action.getActionTypeId() == 1) {
-                        botService.addToRemind(message.getFrom().getId(), action.getTovarId(), Integer.parseInt(message.getText()));
+                        botService.addToRemind(message.getFrom().getId(), (long) action.getTovarId(), Integer.parseInt(message.getText()));
                         sendMsg(message, "Добавил товар №" + action.getTovarId() + " в количесте " + message.getText() + " в избранное");
                         actions.remove(message.getFrom().getId());
                     } else if (action.getActionTypeId() == 2) {
@@ -420,13 +420,11 @@ public class Bot extends TelegramLongPollingBot {
             }
 
             else if (command.startsWith("Remind:")) {
-                //botService.addToRemind(callbackQuery.getFrom().getId(),Integer.parseInt(command.substring(3)), 1);
                 ActionInfo actionInfo = new ActionInfo(1,Integer.parseInt(command.substring(7)));
                 actions.put(callbackQuery.getFrom().getId(),actionInfo);
                 answerCallbackQuery(callbackQuery, "Напишите, сколько товара №"+command.substring(7)+" вы хотите добавить в любимое");
             }
             else if (command.startsWith("Cart:")) {
-                //botService.addToCart(callbackQuery.getFrom().getId(),Integer.parseInt(command),1);
                 ActionInfo actionInfo = new ActionInfo(0, Integer.parseInt(command.substring(5)));
                 actions.put(callbackQuery.getFrom().getId(), actionInfo);
                 answerCallbackQuery(callbackQuery, "Напишите, сколько товара №" + command.substring(5) + " вы хотите добавить в корзину");

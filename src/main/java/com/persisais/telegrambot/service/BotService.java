@@ -30,6 +30,7 @@ public class BotService {
     public String httpGetPhoto = "http://localhost:8080/api/tovar/get/img/";
     public String httpBuy = "http://localhost:8080/api/tovar/get/img/";
     public String httpChangeUser = "http://localhost:8080/api/users/update";
+    public String httpRemoveTovarFromCart = "http://localhost:8080/api/carts/remove/";
 
 
 
@@ -150,8 +151,7 @@ public class BotService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(http5+id_telegram, entity, String.class);
     }
-    public void addToRemind(Long id_telegram, int id_tovar, int quantity) {
-        // TODO id_tovar в Long
+    public void addToRemind(Long id_telegram, Long id_tovar, int quantity) {
         HttpHeaders headers = createHeaders(id_telegram);
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
