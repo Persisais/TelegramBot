@@ -15,8 +15,13 @@ public class UsersDto {
     @JsonProperty("id")
     private Long id;
 
+
+
     @JsonProperty("id_telegram")
     private Long id_telegram;
+
+    @JsonProperty("id_chat")
+    private Long id_chat;
 
     @JsonProperty("name")
     private String name;

@@ -1,11 +1,11 @@
 package com.persisais.telegrambot.bot;
 
-import com.persisais.telegrambot.Service.BotService;
 import com.persisais.telegrambot.memory.ActionInfo;
 import com.persisais.telegrambot.model.CategoryDto;
 import com.persisais.telegrambot.model.RemindDto;
 import com.persisais.telegrambot.model.TovarDto;
 import com.persisais.telegrambot.model.TrashDto;
+import com.persisais.telegrambot.service.BotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpServerErrorException;
@@ -37,6 +37,7 @@ public class Bot extends TelegramLongPollingBot {
 
     @Autowired
     private BotService botService;
+
 
     @Override
     public String getBotUsername() {
@@ -106,11 +107,11 @@ public class Bot extends TelegramLongPollingBot {
                 InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
                 if (tovarArr[j].getQuantity_in_stock()>0) {
                     button.setText(tovarArr[j].getId().toString());
-                    button.setCallbackData(tovarArr[j].getId().toString());
+                    button.setCallbackData("Cart:"+tovarArr[j].getId());
                     keyboardButtonsRow.add(button);
                 }
                 buttonSecond.setText("❤️"+tovarArr[j].getId().toString());
-                buttonSecond.setCallbackData("fav"+tovarArr[j].getId().toString());
+                buttonSecond.setCallbackData("Remind:"+tovarArr[j].getId().toString());
                 keyboardButtonsSecondRow.add(buttonSecond);
 
                 //TODO Сделать sendPhoto, вместо sendMediaGroup, если в пятерке товаров только 1 товар
@@ -165,9 +166,41 @@ public class Bot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
     }
+    public void sendUserInfo (Message message) {
+        String messageText = botService.getUserByTg(message.getFrom().getId()).toString();
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<InlineKeyboardButton> keyboardButtonsRow= new ArrayList<>();
+        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+        InlineKeyboardButton buttonUpdateInfo = new InlineKeyboardButton();
+        buttonUpdateInfo.setText("Обновить");
+        buttonUpdateInfo.setCallbackData("UpdateUserInfo");
+        keyboardButtonsRow.add(buttonUpdateInfo);
+
+        InlineKeyboardButton buttonUpdatePhone = new InlineKeyboardButton();
+        buttonUpdatePhone.setText("☎️");
+        buttonUpdatePhone.setCallbackData("UpdateUserPhone");
+        keyboardButtonsRow.add(buttonUpdatePhone);
+
+        InlineKeyboardButton buttonUpdateEmail = new InlineKeyboardButton();
+        buttonUpdateEmail.setText("\uD83D\uDCEB");
+        buttonUpdateEmail.setCallbackData("UpdateUserEmail");
+        keyboardButtonsRow.add(buttonUpdateEmail);
+
+        InlineKeyboardButton buttonUpdateAgreement = new InlineKeyboardButton();
+        buttonUpdateAgreement.setText(botService.getUserByTg(message.getFrom().getId()).getCurrentAgreementSmile());
+        buttonUpdateAgreement.setCallbackData("UpdateUserAgreement");
+        keyboardButtonsRow.add(buttonUpdateAgreement);
+
+        rowList.add(keyboardButtonsRow);
+        inlineKeyboardMarkup.setKeyboard(rowList);
+
+        sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+    }
+
 
     @Override
     public void onUpdateReceived(Update update) {
+
         if (update.hasMessage() && update.getMessage().hasText()) {
             Message message = update.getMessage();
             TovarDto[] tovarArr;
@@ -177,30 +210,53 @@ public class Bot extends TelegramLongPollingBot {
             String messageText;
             int l, r;
 
-            if (actions.get(message.getFrom().getId())!=null && message.getText().chars().allMatch( Character::isDigit )) {
+            if (actions.get(message.getFrom().getId())!=null) {
                 ActionInfo action = actions.get(message.getFrom().getId());
-                try {
-                    if (action.getActionTypeId()==0) {
-                        botService.addToCart(message.getFrom().getId(),action.getTovarId(),Integer.parseInt(message.getText()));
-                        sendMsg(message, "Добавил товар №"+action.getTovarId()+" в количесте "+message.getText()+" в корзину");
-                        actions.remove(message.getFrom().getId());
-                    }
-                    else if (action.getActionTypeId()==1) {
+                if (message.getText().chars().allMatch( Character::isDigit )) {
+                    if (action.getActionTypeId() == 0) {
+                        try {
+                            botService.addToCart(message.getFrom().getId(), action.getTovarId(), Integer.parseInt(message.getText()));
+                            sendMsg(message, "Добавил товар №" + action.getTovarId() + " в количесте " + message.getText() + " в корзину");
+                            actions.remove(message.getFrom().getId());
+                        } catch (HttpServerErrorException e) {
+                            sendMsg(message, "У нас нет столько товара на складе");
+                        } catch (NumberFormatException e) {
+                            sendMsg(message, "Вы не можете добавить в корзину больше 32767 единиц товара потому что: \n1) У вас нет столько денег\n2) У вас нет *СТОЛЬКО* денег\n3) У нас на складе нет столько товара");
+                        }
+                    } else if (action.getActionTypeId() == 1) {
                         botService.addToRemind(message.getFrom().getId(), action.getTovarId(), Integer.parseInt(message.getText()));
                         sendMsg(message, "Добавил товар №" + action.getTovarId() + " в количесте " + message.getText() + " в избранное");
                         actions.remove(message.getFrom().getId());
+                    } else if (action.getActionTypeId() == 2) {
+                        String phoneNumber = message.getText();
+                        if (phoneNumber.length() == 11) {
+                            boolean agreement =botService.getUserByTg(message.getFrom().getId()).getAgreement();
+                            botService.changeUser(message.getFrom().getId(), phoneNumber, agreement);
+                            actions.remove(message.getFrom().getId());
+                            sendMsg(message, "Номер телефона обновлён");
+                            sendUserInfo(message);
+                        } else {
+                            sendMsg(message, "Номер телефона неверен, он должен содержать 11 цифр");
+                        }
                     }
                 }
-                catch (HttpServerErrorException e) {
-                    sendMsg(message,"У нас нет столько товара на складе");
+                else if (action.getActionTypeId()==3) {
+                    String email = message.getText();
+                    if (email.contains("@")) {
+                        boolean agreement =botService.getUserByTg(message.getFrom().getId()).getAgreement();
+                        botService.changeUser(email,message.getFrom().getId(), agreement);
+                        actions.remove(message.getFrom().getId());
+                        sendMsg(message, "Адрес почты обновлён");
+                        sendUserInfo(message);
+                    }
+                    else {
+                        sendMsg(message, "Неверный формат почты");
+                    }
                 }
-                catch (NumberFormatException e) {
-                    sendMsg(message,"Вы не можете добавить в корзину больше 32767 единиц товара потому что: \n1) У вас нет столько денег\n2) У вас нет *СТОЛЬКО* денег\n3) У нас на складе нет столько товара");
-                }
-
 
             }
             else {
+
                 switch (message.getText()) {
 
                     case "/start":
@@ -210,41 +266,17 @@ public class Bot extends TelegramLongPollingBot {
                         sendMsg(message, "Никто тебе не поможет\nБот создан для интернет-магазина\nДоступные команды:\n" +
                                 "/start - начать работу\n/help - помощь\n/setting - настройки\n/random - получить случайное число от 1 до 100");
                         break;
+                    case "/setting":
+                        sendMsg(message, "И что ты хочешь настроить?");
                     case "/my_info":
-                        messageText = botService.getUserByTg(message.getFrom().getId()).toString();
-                        inlineKeyboardMarkup = new InlineKeyboardMarkup();
-                        rowList = new ArrayList<>();
-                        keyboardButtonsRow= new ArrayList<>();
-                        InlineKeyboardButton buttonUpdateInfo = new InlineKeyboardButton();
-                        buttonUpdateInfo.setText("Обновить");
-                        buttonUpdateInfo.setCallbackData("UpdateUserInfo:"+message.getFrom().getId());
-                        keyboardButtonsRow.add(buttonUpdateInfo);
-
-                        InlineKeyboardButton buttonUpdatePhone = new InlineKeyboardButton();
-                        buttonUpdatePhone.setText("☎️");
-                        buttonUpdatePhone.setCallbackData("UpdateUserPhone:"+message.getFrom().getId());
-                        keyboardButtonsRow.add(buttonUpdatePhone);
-
-                        InlineKeyboardButton buttonUpdateEmail = new InlineKeyboardButton();
-                        buttonUpdateEmail.setText("\uD83D\uDCEB");
-                        buttonUpdateEmail.setCallbackData("UpdateUserEmail:"+message.getFrom().getId());
-                        keyboardButtonsRow.add(buttonUpdateEmail);
-
-                        InlineKeyboardButton buttonUpdateAgreement = new InlineKeyboardButton();
-                        buttonUpdateAgreement.setText(botService.getUserByTg(message.getFrom().getId()).getCurrentAgreementSmile());
-                        buttonUpdateAgreement.setCallbackData("UpdateUserAgreement:"+message.getFrom().getId());
-                        keyboardButtonsRow.add(buttonUpdateAgreement);
-
-                        rowList.add(keyboardButtonsRow);
-                        inlineKeyboardMarkup.setKeyboard(rowList);
-
-                        sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+                        sendUserInfo(message);
                         break;
                     case "/random":
                         sendMsg(message, String.valueOf((int) (Math.random() * 100 + 1)));
                         break;
                     case "/add_user":
                         Long id_telegram = message.getFrom().getId();
+//                        Long id_chat = message.getChat().getId();
                         String name = message.getChat().getUserName();
                         String firstname = message.getChat().getFirstName();
                         String lastname = message.getChat().getLastName();
@@ -260,6 +292,9 @@ public class Bot extends TelegramLongPollingBot {
                         break;
                     case "/get_tovar_by_category":
                         CategoryDto[] categoriesArr = botService.getCategories(message.getFrom().getId());
+                        inlineKeyboardMarkup = new InlineKeyboardMarkup();
+                        rowList = new ArrayList<>();
+                        messageText="*Категории:*\n";
                         inlineKeyboardMarkup = new InlineKeyboardMarkup();
                         rowList = new ArrayList<>();
                         messageText="*Категории:*\n";
@@ -318,6 +353,8 @@ public class Bot extends TelegramLongPollingBot {
                         messageText+="\n[Ссылочка, которая не работает](http://localhost:8080/buy/1675364273)";
                         messageText+="\n`http://localhost:8080/buy/"+message.getFrom().getId()+"`";
                         //buttonYes.setUrl("http://localhost:8080/buy/"+message.getFrom().getId());
+                        //это должна быть нормальная ссылка, которую может открыть телеграм апи
+                        //1675364273
 
                         //buttonYes.setUrl("yandex.ru");
                         buttonYes.setText("Да");
@@ -345,33 +382,60 @@ public class Bot extends TelegramLongPollingBot {
         else if (update.hasCallbackQuery()) {
             String command = update.getCallbackQuery().getData();
             CallbackQuery callbackQuery = update.getCallbackQuery();
+            Message message = new Message();
+            message.setChat(callbackQuery.getMessage().getChat());
+            message.setFrom(callbackQuery.getFrom());
             if (command.equals("next")) {
                 //TODO
                 answerCallbackQuery(callbackQuery, "Показываю следующие товары (нет)");
             }
+            if (command.equals("UpdateUserInfo")) {
+                boolean agreement =botService.getUserByTg(message.getFrom().getId()).getAgreement();
+                botService.changeUser(callbackQuery.getFrom().getId(),callbackQuery.getFrom().getUserName(),callbackQuery.getFrom().getFirstName(),callbackQuery.getFrom().getLastName(), agreement);
+                answerCallbackQuery(callbackQuery, "Ваша информация обновлена");
+                sendUserInfo(message);
+            }
+            if (command.equals("UpdateUserPhone")) {
+                ActionInfo actionInfo = new ActionInfo(2,1);
+                actions.put(callbackQuery.getFrom().getId(),actionInfo);
+                answerCallbackQuery(callbackQuery, "Напишите ваш актуальный номер телефона");
+            }
+            if (command.equals("UpdateUserEmail")) {
+                ActionInfo actionInfo = new ActionInfo(3,1);
+                actions.put(callbackQuery.getFrom().getId(),actionInfo);
+                answerCallbackQuery(callbackQuery, "Напишите вашу актуальную почту");
+            }
+            if (command.equals("UpdateUserAgreement")) {
+                boolean agreement =!botService.getUserByTg(message.getFrom().getId()).getAgreement();
+                botService.changeUser(callbackQuery.getFrom().getId(),agreement);
+                answerCallbackQuery(callbackQuery, "Ваша информация обновлена");
+                sendUserInfo(message);
+            }
+
+
             else if (command.startsWith("Category:")) {
                 TovarDto[] tovarArr = botService.getTovarByCategory(callbackQuery.getFrom().getId(), Integer.parseInt(command.substring(9)));
-                Message message = new Message();
-                message.setChat(callbackQuery.getMessage().getChat());
-                message.setFrom(callbackQuery.getFrom());
                 sendTovarInfo(message, tovarArr);
                 answerCallbackQuery(callbackQuery, "Показываю товары в категории №"+Integer.parseInt(command.substring(9)));
             }
 
-            else if (command.startsWith("fav")) {
+            else if (command.startsWith("Remind:")) {
                 //botService.addToRemind(callbackQuery.getFrom().getId(),Integer.parseInt(command.substring(3)), 1);
-                ActionInfo actionInfo = new ActionInfo(1,Integer.parseInt(command.substring(3)));
+                ActionInfo actionInfo = new ActionInfo(1,Integer.parseInt(command.substring(7)));
                 actions.put(callbackQuery.getFrom().getId(),actionInfo);
-                answerCallbackQuery(callbackQuery, "Напишите, сколько товара №"+command.substring(3)+" вы хотите добавить в любимое");
-
+                answerCallbackQuery(callbackQuery, "Напишите, сколько товара №"+command.substring(7)+" вы хотите добавить в любимое");
+            }
+            else if (command.startsWith("Cart:")) {
+                //botService.addToCart(callbackQuery.getFrom().getId(),Integer.parseInt(command),1);
+                ActionInfo actionInfo = new ActionInfo(0, Integer.parseInt(command.substring(5)));
+                actions.put(callbackQuery.getFrom().getId(), actionInfo);
+                answerCallbackQuery(callbackQuery, "Напишите, сколько товара №" + command.substring(5) + " вы хотите добавить в корзину");
             }
             else {
-                //botService.addToCart(callbackQuery.getFrom().getId(),Integer.parseInt(command),1);
-                ActionInfo actionInfo = new ActionInfo(0,Integer.parseInt(command));
-                actions.put(callbackQuery.getFrom().getId(),actionInfo);
-                answerCallbackQuery(callbackQuery, "Напишите, сколько товара №"+command+" вы хотите добавить в корзину");
-
+                answerCallbackQuery(callbackQuery, "Ты где этот коллбэк достал?");
+                }
             }
         }
-    }
+
 }
+

@@ -1,4 +1,4 @@
-package com.persisais.telegrambot.Service;
+package com.persisais.telegrambot.service;
 
 import com.persisais.telegrambot.model.*;
 import org.springframework.http.*;
@@ -63,6 +63,7 @@ public class BotService {
 
         Map<String, Object> map = new HashMap<>();
         map.put("id_telegram", id_telegram);
+//        map.put("id_chat", id_chat);
         map.put("name", name);
         map.put("firstname", firstname);
         map.put("lastname", lastname);
@@ -75,7 +76,7 @@ public class BotService {
         ResponseEntity<String> response = restTemplate.postForEntity(http, entity, String.class);
     }
 
-    public void changeUser(Long id_telegram, String name, String firstname, String lastname) {
+    public void changeUser(Long id_telegram, String name, String firstname, String lastname, boolean agreement) {
         HttpHeaders headers = createHeaders(id_telegram);
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -84,6 +85,7 @@ public class BotService {
         map.put("name", name);
         map.put("firstname", firstname);
         map.put("lastname", lastname);
+        map.put("agreement", agreement);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
         try {
             ResponseEntity<String> response = restTemplate.exchange(new URI(httpChangeUser), HttpMethod.PUT, entity, String.class);
@@ -91,13 +93,14 @@ public class BotService {
             e.printStackTrace();
         }
     }
-    public void changeUser(Long id_telegram, String phone) {
+    public void changeUser(Long id_telegram, String phone, boolean agreement) {
         HttpHeaders headers = createHeaders(id_telegram);
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         Map<String, Object> map = new HashMap<>();
         map.put("id_telegram", id_telegram);
         map.put("phone", phone);
+        map.put("agreement", agreement);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
         try {
             ResponseEntity<String> response = restTemplate.exchange(new URI(httpChangeUser), HttpMethod.PUT, entity, String.class);
@@ -105,13 +108,14 @@ public class BotService {
             e.printStackTrace();
         }
     }
-    public void changeUser(String mail, Long id_telegram) {
+    public void changeUser(String mail, Long id_telegram, boolean agreement) {
         HttpHeaders headers = createHeaders(id_telegram);
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         Map<String, Object> map = new HashMap<>();
         map.put("id_telegram", id_telegram);
         map.put("mail", mail);
+        map.put("agreement", agreement);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
         try {
             ResponseEntity<String> response = restTemplate.exchange(new URI(httpChangeUser), HttpMethod.PUT, entity, String.class);
