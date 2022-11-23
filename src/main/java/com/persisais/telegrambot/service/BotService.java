@@ -73,7 +73,6 @@ public class BotService {
         map.put("agreement", agreement);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map, headers);
-
         ResponseEntity<String> response = restTemplate.postForEntity(http, entity, String.class);
     }
 

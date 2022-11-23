@@ -13,7 +13,9 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
@@ -91,6 +93,19 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
+    public void sendPhoto (Message message, InputFile media, TovarDto tovar) {
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(message.getChatId().toString());
+        sendPhoto.setReplyToMessageId(message.getMessageId());
+        sendPhoto.setPhoto(media);
+        sendPhoto.setCaption(tovar.toString());
+        try {
+            execute(sendPhoto);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void sendTovarInfo(Message message, TovarDto[] tovarArr) {
         int r, l;
         for (int i=0; i< (int)Math.ceil(tovarArr.length/5.0); i++) {
@@ -101,57 +116,93 @@ public class Bot extends TelegramLongPollingBot {
             List<InlineKeyboardButton> keyboardButtonsRow= new ArrayList<>();
             List<InlineKeyboardButton> keyboardButtonsSecondRow= new ArrayList<>();
             List<InputMedia> media = new ArrayList<>();
-            for (int j=l; j<r; j++) {
-                messageText+=tovarArr[j]+"\n----------------\n";
+            if (r-l==1) {
+                messageText += tovarArr[l] + "\n----------------\n";
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
-                if (tovarArr[j].getQuantity_in_stock()>0) {
-                    button.setText(tovarArr[j].getId().toString());
-                    button.setCallbackData("Cart:"+tovarArr[j].getId());
-                    keyboardButtonsRow.add(button);
-                }
-                buttonSecond.setText("❤️"+tovarArr[j].getId().toString());
-                buttonSecond.setCallbackData("Remind:"+tovarArr[j].getId().toString());
+                button.setText(tovarArr[l].getId().toString());
+                button.setCallbackData("Cart:" + tovarArr[l].getId());
+                keyboardButtonsRow.add(button);
+                buttonSecond.setText("❤️" + tovarArr[l].getId().toString());
+                buttonSecond.setCallbackData("Remind:" + tovarArr[l].getId().toString());
                 keyboardButtonsSecondRow.add(buttonSecond);
-
-                //TODO Сделать sendPhoto, вместо sendMediaGroup, если в пятерке товаров только 1 товар
-
-                InputMedia photo = new InputMediaPhoto();
-                if (tovarArr[j].getPhoto()!=null) {
-                    String pathname ="images/";
-                    byte[] image = botService.getTovarImage(message.getFrom().getId(), tovarArr[j].getId());
+                InputFile photo = new InputFile();
+                if (tovarArr[l].getPhoto() != null) {
+                    String pathname = "images/";
+                    byte[] image = botService.getTovarImage(message.getFrom().getId(), tovarArr[l].getId());
                     try {
-                        Files.write(Paths.get(pathname+tovarArr[j].getId()+".png"), image);
+                        Files.write(Paths.get(pathname + tovarArr[l].getId() + ".png"), image);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    photo.setMedia(new File(pathname+tovarArr[j].getId()+".png"), tovarArr[j].getId().toString());
+                    photo.setMedia(new File(pathname + tovarArr[l].getId() + ".png"), tovarArr[l].getId().toString());
+                } else {
+                    photo.setMedia(emptyImage);
+                }
+                List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+                rowList.add(keyboardButtonsRow);
+                rowList.add(keyboardButtonsSecondRow);
+                inlineKeyboardMarkup.setKeyboard(rowList);
+                sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+                sendPhoto(message, photo, tovarArr[l]);
+            }
+            else {
+                for (int j=l; j<r; j++) {
+                    messageText+=tovarArr[j]+"\n----------------\n";
+                    InlineKeyboardButton button = new InlineKeyboardButton();
+                    InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
+                    if (tovarArr[j].getQuantity_in_stock()>0) {
+                        button.setText(tovarArr[j].getId().toString());
+                        button.setCallbackData("Cart:"+tovarArr[j].getId());
+                        keyboardButtonsRow.add(button);
+                    }
+                    buttonSecond.setText("❤️"+tovarArr[j].getId().toString());
+                    buttonSecond.setCallbackData("Remind:"+tovarArr[j].getId().toString());
+                    keyboardButtonsSecondRow.add(buttonSecond);
+
+                    InputMedia photo = new InputMediaPhoto();
+                    if (tovarArr[j].getPhoto()!=null) {
+                        String pathname ="images/";
+                        byte[] image = botService.getTovarImage(message.getFrom().getId(), tovarArr[j].getId());
+                        try {
+                            Files.write(Paths.get(pathname+tovarArr[j].getId()+".png"), image);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        photo.setMedia(new File(pathname+tovarArr[j].getId()+".png"), tovarArr[j].getId().toString());
 //                                try {
 //                                    photo.setMedia( new FileInputStream("images/"+tovarArr[j].getId()+".png"), tovarArr[j].getId().toString());
 //                                } catch (FileNotFoundException e) {
 //                                    throw new RuntimeException(e);
 //                                }
+                    }
+                    else {
+                        photo.setMedia(emptyImage);
+                    }
+                    photo.setMediaName(tovarArr[j].getId().toString());
+                    photo.setCaption(tovarArr[j].toString());
+                    media.add(photo);
                 }
-                else {
-                    photo.setMedia(emptyImage);
+                if (r!=tovarArr.length) {
+                    InlineKeyboardButton button = new InlineKeyboardButton();
+                    button.setText("-->");
+                    button.setCallbackData("next");
+                    keyboardButtonsRow.add(button);
                 }
-                photo.setMediaName(tovarArr[j].getId().toString());
-                photo.setCaption(tovarArr[j].toString());
-                media.add(photo);
+                List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+                rowList.add(keyboardButtonsRow);
+                rowList.add(keyboardButtonsSecondRow);
+                inlineKeyboardMarkup.setKeyboard(rowList);
+                sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+                sendMediaGroup(message, media);
             }
-            if (r!=tovarArr.length) {
-                InlineKeyboardButton button = new InlineKeyboardButton();
-                button.setText("-->");
-                button.setCallbackData("next");
-                keyboardButtonsRow.add(button);
-            }
-            List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-            rowList.add(keyboardButtonsRow);
-            rowList.add(keyboardButtonsSecondRow);
-            inlineKeyboardMarkup.setKeyboard(rowList);
-            sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
-            sendMediaGroup(message, media);
         }
+
+
+    }
+
+    public void sendCart(Message message,  TrashDto[] trashArr) {
+
     }
 
 
