@@ -40,12 +40,12 @@ public class BotService {
             if (id_telegram == 1675364273) {
                 username = "Admin";
                 password = "Admin";
-                System.out.println("Админ замечен");
+                //System.out.println("Админ замечен");
             }
             else {
                 username = "User";
                 password = "User";
-                System.out.println("Юзер замечен");
+                //System.out.println("Юзер замечен");
             }
             String auth = username + ":" + password;
             byte[] encodedAuth = Base64.getEncoder().encode(

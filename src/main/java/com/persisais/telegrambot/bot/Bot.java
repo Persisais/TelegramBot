@@ -108,15 +108,16 @@ public class Bot extends TelegramLongPollingBot {
 
     public void sendTovarInfo(Message message, TovarDto[] tovarArr) {
         int r, l;
-        for (int i=0; i< (int)Math.ceil(tovarArr.length/5.0); i++) {
+        int ITEMS_PER_MESSAGE=5;
+        for (int i=0; i< (int)Math.ceil(tovarArr.length/(float)ITEMS_PER_MESSAGE); i++) {
             String messageText="";
-            l= 5*i;
-            r= Math.min(l + 5, tovarArr.length);
+            l= ITEMS_PER_MESSAGE*i;
+            r= Math.min(l + ITEMS_PER_MESSAGE, tovarArr.length);
             InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
             List<InlineKeyboardButton> keyboardButtonsRow= new ArrayList<>();
             List<InlineKeyboardButton> keyboardButtonsSecondRow= new ArrayList<>();
             List<InputMedia> media = new ArrayList<>();
-            if (r-l==1) {
+            if (l==tovarArr.length-1) {
                 messageText += tovarArr[l] + "\n----------------\n";
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
@@ -197,8 +198,178 @@ public class Bot extends TelegramLongPollingBot {
                 sendMediaGroup(message, media);
             }
         }
+    }
 
+    public void sendCartInfo(Message message, TrashDto[] trashArr) {
+        int r, l;
+        int ITEMS_PER_MESSAGE=7;
+        for (int i=0; i< (int)Math.ceil(trashArr.length/(float)ITEMS_PER_MESSAGE); i++) {
+            String messageText="";
+            l= ITEMS_PER_MESSAGE*i;
+            r= Math.min(l + ITEMS_PER_MESSAGE, trashArr.length);
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+            List<InlineKeyboardButton> keyboardButtonsRow= new ArrayList<>();
+            List<InlineKeyboardButton> keyboardButtonsSecondRow= new ArrayList<>();
+            List<InputMedia> media = new ArrayList<>();
+            if (l==trashArr.length-1) {
+                messageText += trashArr[l] + "\n----------------\n";
+                InlineKeyboardButton button = new InlineKeyboardButton();
+                InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
+                button.setText("⚙️"+trashArr[l].getTovar().getId().toString());
+                button.setCallbackData("ChangeCart:" + trashArr[l].getTovar().getId());
+                keyboardButtonsRow.add(button);
+                buttonSecond.setText("❌️" + trashArr[l].getTovar().getId().toString());
+                buttonSecond.setCallbackData("DeleteCart:" + trashArr[l].getTovar().getId().toString());
+                keyboardButtonsSecondRow.add(buttonSecond);
+                InputFile photo = new InputFile();
+                if (trashArr[l].getTovar().getPhoto() != null) {
+                    String pathname = "images/";
+                    byte[] image = botService.getTovarImage(message.getFrom().getId(), trashArr[l].getId());
+                    try {
+                        Files.write(Paths.get(pathname + trashArr[l].getId() + ".png"), image);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    photo.setMedia(new File(pathname + trashArr[l].getId() + ".png"), trashArr[l].getId().toString());
+                } else {
+                    photo.setMedia(emptyImage);
+                }
+                List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+                rowList.add(keyboardButtonsRow);
+                rowList.add(keyboardButtonsSecondRow);
+                inlineKeyboardMarkup.setKeyboard(rowList);
+                sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+                sendPhoto(message, photo, trashArr[l].getTovar());
+            }
+            else {
+                for (int j=l; j<r; j++) {
+                    messageText+=trashArr[j]+"\n----------------\n";
+                    InlineKeyboardButton button = new InlineKeyboardButton();
+                    InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
+                    button.setText("⚙️"+trashArr[j].getTovar().getId().toString());
+                    button.setCallbackData("ChangeCart:" + trashArr[j].getTovar().getId());
+                    keyboardButtonsRow.add(button);
+                    buttonSecond.setText("❌️" + trashArr[j].getTovar().getId().toString());
+                    buttonSecond.setCallbackData("DeleteCart:" + trashArr[j].getTovar().getId().toString());
+                    keyboardButtonsSecondRow.add(buttonSecond);
 
+                    InputMedia photo = new InputMediaPhoto();
+                    if (trashArr[j].getTovar().getPhoto()!=null) {
+                        String pathname ="images/";
+                        byte[] image = botService.getTovarImage(message.getFrom().getId(), trashArr[j].getTovar().getId());
+                        try {
+                            Files.write(Paths.get(pathname+trashArr[j].getTovar().getId()+".png"), image);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        photo.setMedia(new File(pathname+trashArr[j].getTovar().getId()+".png"), trashArr[j].getTovar().getId().toString());
+//                                try {
+//                                    photo.setMedia( new FileInputStream("images/"+tovarArr[j].getId()+".png"), tovarArr[j].getId().toString());
+//                                } catch (FileNotFoundException e) {
+//                                    throw new RuntimeException(e);
+//                                }
+                    }
+                    else {
+                        photo.setMedia(emptyImage);
+                    }
+                    photo.setMediaName(trashArr[j].getTovar().getId().toString());
+                    photo.setCaption(trashArr[j].toString());
+                    media.add(photo);
+                }
+                List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+                rowList.add(keyboardButtonsRow);
+                rowList.add(keyboardButtonsSecondRow);
+                inlineKeyboardMarkup.setKeyboard(rowList);
+                sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+                sendMediaGroup(message, media);
+            }
+        }
+    }
+
+    public void sendRemindInfo(Message message, RemindDto[] remindArr) {
+        int r, l;
+        int ITEMS_PER_MESSAGE=7;
+        for (int i=0; i< (int)Math.ceil(remindArr.length/(float)ITEMS_PER_MESSAGE); i++) {
+            String messageText="";
+            l= ITEMS_PER_MESSAGE*i;
+            r= Math.min(l + ITEMS_PER_MESSAGE, remindArr.length);
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+            List<InlineKeyboardButton> keyboardButtonsRow= new ArrayList<>();
+            List<InlineKeyboardButton> keyboardButtonsSecondRow= new ArrayList<>();
+            List<InputMedia> media = new ArrayList<>();
+            if (l==remindArr.length-1) {
+                messageText += remindArr[l] + "\n----------------\n";
+                InlineKeyboardButton button = new InlineKeyboardButton();
+                InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
+                button.setText("⚙️"+remindArr[l].getTovar().getId().toString());
+                button.setCallbackData("ChangeCart:" + remindArr[l].getTovar().getId());
+                keyboardButtonsRow.add(button);
+                buttonSecond.setText("❌️" + remindArr[l].getTovar().getId().toString());
+                buttonSecond.setCallbackData("DeleteCart:" + remindArr[l].getTovar().getId().toString());
+                keyboardButtonsSecondRow.add(buttonSecond);
+                InputFile photo = new InputFile();
+                if (remindArr[l].getTovar().getPhoto() != null) {
+                    String pathname = "images/";
+                    byte[] image = botService.getTovarImage(message.getFrom().getId(), remindArr[l].getId());
+                    try {
+                        Files.write(Paths.get(pathname + remindArr[l].getId() + ".png"), image);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    photo.setMedia(new File(pathname + remindArr[l].getId() + ".png"), remindArr[l].getId().toString());
+                } else {
+                    photo.setMedia(emptyImage);
+                }
+                List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+                rowList.add(keyboardButtonsRow);
+                rowList.add(keyboardButtonsSecondRow);
+                inlineKeyboardMarkup.setKeyboard(rowList);
+                sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+                sendPhoto(message, photo, remindArr[l].getTovar());
+            }
+            else {
+                for (int j=l; j<r; j++) {
+                    messageText+=remindArr[j]+"\n----------------\n";
+                    InlineKeyboardButton button = new InlineKeyboardButton();
+                    InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
+                    button.setText("⚙️"+remindArr[j].getTovar().getId().toString());
+                    button.setCallbackData("ChangeCart:" + remindArr[j].getTovar().getId());
+                    keyboardButtonsRow.add(button);
+                    buttonSecond.setText("❌️" + remindArr[j].getTovar().getId().toString());
+                    buttonSecond.setCallbackData("DeleteCart:" + remindArr[j].getTovar().getId().toString());
+                    keyboardButtonsSecondRow.add(buttonSecond);
+
+                    InputMedia photo = new InputMediaPhoto();
+                    if (remindArr[j].getTovar().getPhoto()!=null) {
+                        String pathname ="images/";
+                        byte[] image = botService.getTovarImage(message.getFrom().getId(), remindArr[j].getTovar().getId());
+                        try {
+                            Files.write(Paths.get(pathname+remindArr[j].getTovar().getId()+".png"), image);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        photo.setMedia(new File(pathname+remindArr[j].getTovar().getId()+".png"), remindArr[j].getTovar().getId().toString());
+//                                try {
+//                                    photo.setMedia( new FileInputStream("images/"+tovarArr[j].getId()+".png"), tovarArr[j].getId().toString());
+//                                } catch (FileNotFoundException e) {
+//                                    throw new RuntimeException(e);
+//                                }
+                    }
+                    else {
+                        photo.setMedia(emptyImage);
+                    }
+                    photo.setMediaName(remindArr[j].getTovar().getId().toString());
+                    photo.setCaption(remindArr[j].toString());
+                    media.add(photo);
+                }
+                List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+                rowList.add(keyboardButtonsRow);
+                rowList.add(keyboardButtonsSecondRow);
+                inlineKeyboardMarkup.setKeyboard(rowList);
+                sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+                sendMediaGroup(message, media);
+            }
+        }
     }
 
     public void sendCart(Message message,  TrashDto[] trashArr) {
@@ -378,17 +549,11 @@ public class Bot extends TelegramLongPollingBot {
                         break;
                     case "/get_remind":
                         RemindDto[] remindArr = botService.getRemind(message.getFrom().getId());
-                        for (RemindDto remind : remindArr) {
-                            sendMsg(message, remind.toString());
-                        }
+                        sendRemindInfo(message, remindArr);
                         break;
                     case "/get_cart":
                         TrashDto[] trashArr= botService.getCart(message.getFrom().getId());
-                        messageText ="*Ваша корзина*:\n";
-                        for (TrashDto trash : trashArr) {
-                            messageText+=trash+"\n----------------\n";
-                        }
-                        sendMsg(message, messageText);
+                        sendCartInfo(message,trashArr);
                         break;
                     case "/buy":
                         trashArr= botService.getCart(message.getFrom().getId());
