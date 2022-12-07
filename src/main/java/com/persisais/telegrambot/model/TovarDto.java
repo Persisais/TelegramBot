@@ -43,8 +43,17 @@ public class TovarDto {
        return ("*Номер товара:* "+ id+"" +
                "\n*Название товара: *"+name +
                "\n*Категория: *" + category.getName() +
+               "\n*Количество на складе: *" + quantity_in_stock +
                "\n*Цена: *" + cost +
                "_ ₽_\n*Описание:* " + description);
+    }
+    public String toStringMedia () {
+        return ("Номер товара: "+ id+"" +
+                "\nНазвание товара: "+name +
+                "\nКатегория: " + category.getName() +
+                "\nКоличество на складе: " + quantity_in_stock +
+                "\nЦена: " + cost +
+                " ₽\nОписание: " + description);
     }
 
 }

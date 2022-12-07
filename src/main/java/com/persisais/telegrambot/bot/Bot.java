@@ -1,13 +1,12 @@
 package com.persisais.telegrambot.bot;
 
 import com.persisais.telegrambot.memory.ActionInfo;
-import com.persisais.telegrambot.model.CategoryDto;
-import com.persisais.telegrambot.model.RemindDto;
-import com.persisais.telegrambot.model.TovarDto;
-import com.persisais.telegrambot.model.TrashDto;
+import com.persisais.telegrambot.model.*;
 import com.persisais.telegrambot.service.BotService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
@@ -24,6 +23,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import javax.validation.constraints.Null;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,16 +39,22 @@ public class Bot extends TelegramLongPollingBot {
 
     @Autowired
     private BotService botService;
+    @Value("${bot.username}")
+    private String username;
 
+    @Value("${bot.token}")
+    private String token;
+
+    private TovarDto[] fullTovarArr;
 
     @Override
     public String getBotUsername() {
-        return "FMv0.000003";
+        return username;
     }
 
     @Override
     public String getBotToken() {
-        return "5463822852:AAF1k_KHQyWy2P9CKv0R6Z-X298TRb-XRSI";
+        return token;
     }
 
     public final String emptyImage = "https://www.ponycorral.ca/wp-content/uploads/2015/07/placeholder-image-1000x1000-150x150.png";
@@ -98,7 +104,7 @@ public class Bot extends TelegramLongPollingBot {
         sendPhoto.setChatId(message.getChatId().toString());
         sendPhoto.setReplyToMessageId(message.getMessageId());
         sendPhoto.setPhoto(media);
-        sendPhoto.setCaption(tovar.toString());
+        sendPhoto.setCaption(tovar.toStringMedia());
         try {
             execute(sendPhoto);
         } catch (TelegramApiException e) {
@@ -181,7 +187,7 @@ public class Bot extends TelegramLongPollingBot {
                         photo.setMedia(emptyImage);
                     }
                     photo.setMediaName(tovarArr[j].getId().toString());
-                    photo.setCaption(tovarArr[j].toString());
+                    photo.setCaption(tovarArr[j].toStringMedia());
                     media.add(photo);
                 }
                 if (r!=tovarArr.length) {
@@ -197,6 +203,101 @@ public class Bot extends TelegramLongPollingBot {
                 sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
                 sendMediaGroup(message, media);
             }
+        }
+    }
+
+    public void sendTovarInfo(Message message, TovarDto[] tovarArr, int iteration) {
+        int r, l;
+        int ITEMS_PER_MESSAGE=5;
+        String messageText="";
+        l= ITEMS_PER_MESSAGE*iteration;
+        r= Math.min(l + ITEMS_PER_MESSAGE, tovarArr.length);
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<InlineKeyboardButton> keyboardButtonsRow= new ArrayList<>();
+        List<InlineKeyboardButton> keyboardButtonsSecondRow= new ArrayList<>();
+        List<InputMedia> media = new ArrayList<>();
+        if (l==tovarArr.length-1) {
+            messageText += tovarArr[l] + "\n----------------\n";
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
+            button.setText(tovarArr[l].getId().toString());
+            button.setCallbackData("Cart:" + tovarArr[l].getId());
+            keyboardButtonsRow.add(button);
+            buttonSecond.setText("❤️" + tovarArr[l].getId().toString());
+            buttonSecond.setCallbackData("Remind:" + tovarArr[l].getId().toString());
+            keyboardButtonsSecondRow.add(buttonSecond);
+            InputFile photo = new InputFile();
+            if (tovarArr[l].getPhoto() != null) {
+                String pathname = "images/";
+                byte[] image = botService.getTovarImage(message.getFrom().getId(), tovarArr[l].getId());
+                try {
+                    Files.write(Paths.get(pathname + tovarArr[l].getId() + ".png"), image);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                photo.setMedia(new File(pathname + tovarArr[l].getId() + ".png"), tovarArr[l].getId().toString());
+            } else {
+                photo.setMedia(emptyImage);
+            }
+            List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+            rowList.add(keyboardButtonsRow);
+            rowList.add(keyboardButtonsSecondRow);
+            inlineKeyboardMarkup.setKeyboard(rowList);
+            sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+            sendPhoto(message, photo, tovarArr[l]);
+        }
+        else {
+            for (int j=l; j<r; j++) {
+                messageText+=tovarArr[j]+"\n----------------\n";
+                InlineKeyboardButton button = new InlineKeyboardButton();
+                InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
+                if (tovarArr[j].getQuantity_in_stock()>0) {
+                    button.setText(tovarArr[j].getId().toString());
+                    button.setCallbackData("Cart:"+tovarArr[j].getId());
+                    keyboardButtonsRow.add(button);
+                }
+                buttonSecond.setText("❤️"+tovarArr[j].getId().toString());
+                buttonSecond.setCallbackData("Remind:"+tovarArr[j].getId().toString());
+                keyboardButtonsSecondRow.add(buttonSecond);
+
+                InputMedia photo = new InputMediaPhoto();
+                if (tovarArr[j].getPhoto()!=null) {
+                    String pathname ="images/";
+                    byte[] image = botService.getTovarImage(message.getFrom().getId(), tovarArr[j].getId());
+                    try {
+                        Files.write(Paths.get(pathname+tovarArr[j].getId()+".png"), image);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    photo.setMedia(new File(pathname+tovarArr[j].getId()+".png"), tovarArr[j].getId().toString());
+//                                try {
+//                                    photo.setMedia( new FileInputStream("images/"+tovarArr[j].getId()+".png"), tovarArr[j].getId().toString());
+//                                } catch (FileNotFoundException e) {
+//                                    throw new RuntimeException(e);
+//                                }
+                }
+                else {
+                    photo.setMedia(emptyImage);
+                }
+                photo.setMediaName(tovarArr[j].getId().toString());
+                photo.setCaption(tovarArr[j].toStringMedia());
+                media.add(photo);
+            }
+            if (r!=tovarArr.length) {
+                InlineKeyboardButton button = new InlineKeyboardButton();
+                button.setText("-->");
+                button.setCallbackData("Next:"+iteration+1);
+                keyboardButtonsRow.add(button);
+            }
+            List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+            rowList.add(keyboardButtonsRow);
+            rowList.add(keyboardButtonsSecondRow);
+            inlineKeyboardMarkup.setKeyboard(rowList);
+            sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+            sendMediaGroup(message, media);
+        }
+        for (int i=0; i< (int)Math.ceil(tovarArr.length/(float)ITEMS_PER_MESSAGE); i++) {
+
         }
     }
 
@@ -273,7 +374,7 @@ public class Bot extends TelegramLongPollingBot {
                         photo.setMedia(emptyImage);
                     }
                     photo.setMediaName(trashArr[j].getTovar().getId().toString());
-                    photo.setCaption(trashArr[j].toString());
+                    photo.setCaption(trashArr[j].toStringMedia());
                     media.add(photo);
                 }
                 List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
@@ -302,10 +403,10 @@ public class Bot extends TelegramLongPollingBot {
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
                 button.setText("⚙️"+remindArr[l].getTovar().getId().toString());
-                button.setCallbackData("ChangeCart:" + remindArr[l].getTovar().getId());
+                button.setCallbackData("ChangeRemind:" + remindArr[l].getTovar().getId());
                 keyboardButtonsRow.add(button);
                 buttonSecond.setText("❌️" + remindArr[l].getTovar().getId().toString());
-                buttonSecond.setCallbackData("DeleteCart:" + remindArr[l].getTovar().getId().toString());
+                buttonSecond.setCallbackData("DeleteRemind:" + remindArr[l].getTovar().getId().toString());
                 keyboardButtonsSecondRow.add(buttonSecond);
                 InputFile photo = new InputFile();
                 if (remindArr[l].getTovar().getPhoto() != null) {
@@ -333,10 +434,10 @@ public class Bot extends TelegramLongPollingBot {
                     InlineKeyboardButton button = new InlineKeyboardButton();
                     InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
                     button.setText("⚙️"+remindArr[j].getTovar().getId().toString());
-                    button.setCallbackData("ChangeCart:" + remindArr[j].getTovar().getId());
+                    button.setCallbackData("ChangeRemind:" + remindArr[j].getTovar().getId());
                     keyboardButtonsRow.add(button);
                     buttonSecond.setText("❌️" + remindArr[j].getTovar().getId().toString());
-                    buttonSecond.setCallbackData("DeleteCart:" + remindArr[j].getTovar().getId().toString());
+                    buttonSecond.setCallbackData("DeleteRemind:" + remindArr[j].getTovar().getId().toString());
                     keyboardButtonsSecondRow.add(buttonSecond);
 
                     InputMedia photo = new InputMediaPhoto();
@@ -359,7 +460,7 @@ public class Bot extends TelegramLongPollingBot {
                         photo.setMedia(emptyImage);
                     }
                     photo.setMediaName(remindArr[j].getTovar().getId().toString());
-                    photo.setCaption(remindArr[j].toString());
+                    photo.setCaption(remindArr[j].toStringMedia());
                     media.add(photo);
                 }
                 List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
@@ -371,11 +472,6 @@ public class Bot extends TelegramLongPollingBot {
             }
         }
     }
-
-    public void sendCart(Message message,  TrashDto[] trashArr) {
-
-    }
-
 
     public void answerCallbackQuery(CallbackQuery callbackQuery, String text) {
         AnswerCallbackQuery answer = new AnswerCallbackQuery();
@@ -422,7 +518,6 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-
         if (update.hasMessage() && update.getMessage().hasText()) {
             Message message = update.getMessage();
             TovarDto[] tovarArr;
@@ -430,19 +525,85 @@ public class Bot extends TelegramLongPollingBot {
             List<InlineKeyboardButton> keyboardButtonsRow;
             List<List<InlineKeyboardButton>> rowList;
             String messageText;
+            ActionInfo action=null;
             int l, r;
+            if (message.getText().equals("/start")) {
+                try {
+                    Long id_telegram = message.getFrom().getId();
+                    String name = message.getChat().getUserName();
+                    String firstname = message.getChat().getFirstName();
+                    String lastname = message.getChat().getLastName();
+                    String phone = "";
+                    String mail = "";
+                    boolean agreement = false;
+                    botService.addUser(id_telegram, name, firstname, lastname, phone, mail, agreement);
+                    sendMsg(message, "Здравствуйте, " + message.getFrom().getFirstName() + "! Чтобы работать с ботом, необходимо написать в чат свой номер телефона и почту. Затем вы получите доступ к комаднам\nЧтобы посмотреть список команд, введите /help");
+                    sendMsg(message, "Я тебя запомнил");
+                    ActionInfo actionInfo = new ActionInfo(2,1);
+                    actions.put(message.getFrom().getId(),actionInfo);
+                }
+                catch (HttpServerErrorException e) {
+                    sendMsg(message, "/start - одноразовая команда, не вызывайте её");
+                    return;
+                }
 
-            if (actions.get(message.getFrom().getId())!=null) {
-                ActionInfo action = actions.get(message.getFrom().getId());
-                if (message.getText().chars().allMatch( Character::isDigit )) {
-                    if (action.getActionTypeId() == 0) {
+            }
+            UsersDto user = botService.getUserByTg(message.getFrom().getId());
+
+            if (actions.get(message.getFrom().getId())!=null && !message.getText().contains("/")) {
+                action = actions.get(message.getFrom().getId());
+            }
+            if (action!=null && user.getPhone()=="" && action.getActionTypeId()==2) {
+                if (message.getText().length()==11 && message.getText().chars().allMatch( Character::isDigit )) {
+                    boolean agreement =user.getAgreement();
+                    botService.changeUser(message.getFrom().getId(), message.getText(), agreement);
+                    ActionInfo actionInfo = new ActionInfo(3,1);
+                    actions.put(message.getFrom().getId(),actionInfo);
+                    sendMsg(message, "Телефон добавлен, теперь введите почту");
+                }
+                else {
+                    sendMsg(message, "Номер телефона неверен, он должен содержать 11 цифр");
+                }
+            }
+            else if (user.getPhone()=="") {
+                ActionInfo actionInfo = new ActionInfo(2,1);
+                actions.put(message.getFrom().getId(),actionInfo);
+                sendMsg(message, "Введите свой номер телефона в следующем сообщении");
+            }
+            else if (action!=null && user.getMail()=="" && action.getActionTypeId()==3) {
+                if (message.getText().contains("@")) {
+                    boolean agreement =user.getAgreement();
+                    botService.changeUser(message.getText(),message.getFrom().getId(), agreement);
+                    actions.remove(message.getFrom().getId());
+                    sendMsg(message, "Адрес почты добавлен, теперь вы имеете полный доступ к командам");
+                }
+                else {
+                    sendMsg(message, "Почта неверна, она должна содержать символ @");
+                }
+            }
+            else if (user.getMail()=="") {
+                ActionInfo actionInfo = new ActionInfo(3,1);
+                actions.put(message.getFrom().getId(),actionInfo);
+                sendMsg(message, "Введите свою почту в следующем сообщении");
+            }
+            else {
+                if (action!=null && message.getText().chars().allMatch( Character::isDigit ) && !message.getText().equals("0")) {
+                    if (action.getActionTypeId() == 0  ) {
                         try {
                             botService.addToCart(message.getFrom().getId(), action.getTovarId(), Integer.parseInt(message.getText()));
                             sendMsg(message, "Добавил товар №" + action.getTovarId() + " в количесте " + message.getText() + " в корзину");
                             actions.remove(message.getFrom().getId());
-                        } catch (HttpServerErrorException e) {
-                            sendMsg(message, "У нас нет столько товара на складе");
-                        } catch (NumberFormatException e) {
+                        }
+                        catch (HttpClientErrorException e) {
+                            if (e.getLocalizedMessage().contains("There is no such quantity of good")) {
+                                sendMsg(message, "У нас нет столько товара на складе");
+                            }
+                            else if (e.getLocalizedMessage().contains("This good is already in car")) {
+                                sendMsg(message, "Этот товар уже добавлен в корзину");
+                                actions.remove(message.getFrom().getId());
+                            }
+                        }
+                        catch (NumberFormatException e) {
                             sendMsg(message, "Вы не можете добавить в корзину больше 32767 единиц товара потому что: \n1) У вас нет столько денег\n2) У вас нет *СТОЛЬКО* денег\n3) У нас на складе нет столько товара");
                         }
                     } else if (action.getActionTypeId() == 1) {
@@ -462,7 +623,7 @@ public class Bot extends TelegramLongPollingBot {
                         }
                     }
                 }
-                else if (action.getActionTypeId()==3) {
+                else if (action!=null && action.getActionTypeId()==3) {
                     String email = message.getText();
                     if (email.contains("@")) {
                         boolean agreement =botService.getUserByTg(message.getFrom().getId()).getAgreement();
@@ -476,124 +637,147 @@ public class Bot extends TelegramLongPollingBot {
                     }
                 }
 
-            }
-            else {
 
-                switch (message.getText()) {
+                else {
 
-                    case "/start":
-                        sendMsg(message, "Здравствуйте, " + message.getFrom().getFirstName() + "! Чтобы посмотреть список команд, введите /help");
-                        break;
-                    case "/help":
-                        sendMsg(message, "Никто тебе не поможет\nБот создан для интернет-магазина\nДоступные команды:\n" +
-                                "/start - начать работу\n/help - помощь\n/setting - настройки\n/random - получить случайное число от 1 до 100");
-                        break;
-                    case "/setting":
-                        sendMsg(message, "И что ты хочешь настроить?");
-                    case "/my_info":
-                        sendUserInfo(message);
-                        break;
-                    case "/random":
-                        sendMsg(message, String.valueOf((int) (Math.random() * 100 + 1)));
-                        break;
-                    case "/add_user":
-                        Long id_telegram = message.getFrom().getId();
-//                        Long id_chat = message.getChat().getId();
-                        String name = message.getChat().getUserName();
-                        String firstname = message.getChat().getFirstName();
-                        String lastname = message.getChat().getLastName();
-                        String phone = "88005553535";
-                        String mail = "1@gmail.com";
-                        boolean agreement = true;
-                        botService.addUser(id_telegram, name, firstname, lastname, phone, mail, agreement);
-                        sendMsg(message, "Я тебя запомнил");
-                        break;
-                    case "/get_tovar":
-                        tovarArr = botService.getTovar(message.getFrom().getId());
-                        sendTovarInfo(message, tovarArr);
-                        break;
-                    case "/get_tovar_by_category":
-                        CategoryDto[] categoriesArr = botService.getCategories(message.getFrom().getId());
-                        inlineKeyboardMarkup = new InlineKeyboardMarkup();
-                        rowList = new ArrayList<>();
-                        messageText="*Категории:*\n";
-                        inlineKeyboardMarkup = new InlineKeyboardMarkup();
-                        rowList = new ArrayList<>();
-                        messageText="*Категории:*\n";
-                        for (int i=0; i< (int)Math.ceil(categoriesArr.length/5.0); i++) {
-                            System.out.println(i);
-                            l= 5*i;
-                            r= Math.min(l + 5, categoriesArr.length);
-                            keyboardButtonsRow= new ArrayList<>();
+                    switch (message.getText()) {
+
+//                        case "/start":
+//                            sendMsg(message, "Здравствуйте, " + message.getFrom().getFirstName() + "! Чтобы работать с ботом, необходимо написать в чат свой номер телефона и почту. Затем вы получите доступ к комаднам\nЧтобы посмотреть список команд, введите /help");
+//                            Long id_telegram = message.getFrom().getId();
+//                            String name = message.getChat().getUserName();
+//                            String firstname = message.getChat().getFirstName();
+//                            String lastname = message.getChat().getLastName();
+//                            String phone = "";
+//                            String mail = "";
+//                            boolean agreement = false;
+//                            botService.addUser(id_telegram, name, firstname, lastname, phone, mail, agreement);
+//                            sendMsg(message, "Я тебя запомнил");
+//                            ActionInfo actionInfo = new ActionInfo(2,1);
+//                            actions.put(message.getFrom().getId(),actionInfo);
+//                            break;
+                        case "/help":
+                            sendMsg(message, "Никто тебе не поможет\nБот создан для интернет-магазина\nДоступные команды:\n" +
+                                    "/help - Посмотреть команды\n" +
+                                    "/my_info - Посмотреть и изменить мои данные\n" +
+                                    "/get_tovar - Посмотреть товары\n" +
+                                    "/get_tovar_by_category - Посмотреть товары по категории\n" +
+                                    "/get_categories - Посмотреть категории\n" +
+                                    "/get_remind - Посмотреть товары в избранном\n" +
+                                    "/get_cart - Посмотреть корзину\n" +
+                                    "/buy - Купить товары из корзины");
+                            break;
+                        case "/my_info":
+                            sendUserInfo(message);
+                            break;
+//                    case "/add_user":
+//                        Long id_telegram = message.getFrom().getId();
+//                        String name = message.getChat().getUserName();
+//                        String firstname = message.getChat().getFirstName();
+//                        String lastname = message.getChat().getLastName();
+//                        String phone = "88005553535";
+//                        String mail = "1@gmail.com";
+//                        boolean agreement = true;
+//                        botService.addUser(id_telegram, name, firstname, lastname, phone, mail, agreement);
+//                        sendMsg(message, "Я тебя запомнил");
+//                        break;
+                        case "/get_tovar":
+                            fullTovarArr = botService.getTovar(message.getFrom().getId());
+                            sendTovarInfo(message, fullTovarArr,0);
+                            break;
+                        case "/get_tovar_by_category":
+                            CategoryDto[] categoriesArr = botService.getCategories(message.getFrom().getId());
+                            inlineKeyboardMarkup = new InlineKeyboardMarkup();
                             rowList = new ArrayList<>();
-                            for (int j=l; j<r; j++) {
-                                messageText+=categoriesArr[j]+"\n----------------\n";
-                                InlineKeyboardButton button = new InlineKeyboardButton();
-                                button.setText(categoriesArr[j].getName());
-                                button.setCallbackData("Category:"+categoriesArr[j].getId().toString());
-                                keyboardButtonsRow.add(button);
+                            messageText="*Категории:*\n";
+                            inlineKeyboardMarkup = new InlineKeyboardMarkup();
+                            rowList = new ArrayList<>();
+                            messageText="*Категории:*\n";
+                            for (int i=0; i< (int)Math.ceil(categoriesArr.length/5.0); i++) {
+                                l= 5*i;
+                                r= Math.min(l + 5, categoriesArr.length);
+                                keyboardButtonsRow= new ArrayList<>();
+                                rowList = new ArrayList<>();
+                                for (int j=l; j<r; j++) {
+                                    messageText+=categoriesArr[j]+"\n----------------\n";
+                                    InlineKeyboardButton button = new InlineKeyboardButton();
+                                    button.setText(categoriesArr[j].getName());
+                                    button.setCallbackData("Category:"+categoriesArr[j].getId().toString());
+                                    keyboardButtonsRow.add(button);
+                                }
+                                rowList.add(keyboardButtonsRow);
                             }
-                            rowList.add(keyboardButtonsRow);
-                        }
-                        inlineKeyboardMarkup.setKeyboard(rowList);
-                        sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
-                        break;
+                            inlineKeyboardMarkup.setKeyboard(rowList);
+                            sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+                            break;
 
-                    case "/get_categories":
-                        CategoryDto[] categoryArr =botService.getCategories(message.getFrom().getId());
-                        messageText = "*Категории:*";
-                        for (CategoryDto category: categoryArr) {
-                            messageText += category+"\n----------------\n";
-                        }
-                        sendMsg(message, messageText);
-                        break;
-                    case "/get_remind":
-                        RemindDto[] remindArr = botService.getRemind(message.getFrom().getId());
-                        sendRemindInfo(message, remindArr);
-                        break;
-                    case "/get_cart":
-                        TrashDto[] trashArr= botService.getCart(message.getFrom().getId());
-                        sendCartInfo(message,trashArr);
-                        break;
-                    case "/buy":
-                        trashArr= botService.getCart(message.getFrom().getId());
-                        messageText ="*Ваша корзина*:\n";
-                        for (TrashDto trash : trashArr) {
-                            messageText+=trash+"\n----------------\n";
-                        }
-                        inlineKeyboardMarkup = new InlineKeyboardMarkup();
-                        keyboardButtonsRow = new ArrayList<>();
-                        rowList = new ArrayList<>();
-                        InlineKeyboardButton buttonYes = new InlineKeyboardButton();
-                        InlineKeyboardButton buttonNo = new InlineKeyboardButton();
-                        messageText+="\n[Ссылочка, которая не работает](http://localhost:8080/buy/1675364273)";
-                        messageText+="\n`http://localhost:8080/buy/"+message.getFrom().getId()+"`";
-                        //buttonYes.setUrl("http://localhost:8080/buy/"+message.getFrom().getId());
-                        //это должна быть нормальная ссылка, которую может открыть телеграм апи
-                        //1675364273
+                        case "/get_categories":
+                            CategoryDto[] categoryArr =botService.getCategories(message.getFrom().getId());
+                            messageText = "*Категории:*";
+                            for (CategoryDto category: categoryArr) {
+                                messageText += category+"\n----------------\n";
+                            }
+                            sendMsg(message, messageText);
+                            break;
+                        case "/get_remind":
+                            RemindDto[] remindArr = botService.getRemind(message.getFrom().getId());
+                            //Тут происходит волшебство. getCart выдаёт мне null, если в корзине ничего нет. А getRemind выдаёт мне пустой массив длины 0
+                            if (remindArr==null || remindArr.length==0) {
+                                sendMsg(message, "Ты не можешь посмотреть ремайнд, если у тебя его нет");
+                            }
+                            else {
+                                sendRemindInfo(message, remindArr);
+                            }
 
-                        //buttonYes.setUrl("yandex.ru");
-                        buttonYes.setText("Да");
-                        buttonYes.setCallbackData("YES");
-                        buttonNo.setText("Нет");
-                        buttonNo.setCallbackData("NO");
-                        keyboardButtonsRow.add(buttonYes);
-                        keyboardButtonsRow.add(buttonNo);
-                        rowList.add(keyboardButtonsRow);
-                        inlineKeyboardMarkup.setKeyboard(rowList);
-                        sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+                            break;
+                        case "/get_cart":
+                            TrashDto[] trashArr= botService.getCart(message.getFrom().getId());
+                            if (trashArr==null || trashArr.length==0) {
+                                sendMsg(message, "Ты не можешь посмотреть корзину, если у тебя её нет");
+                            }
+                            else {
+                                sendCartInfo(message,trashArr);
+                            }
 
-
-                        //sendMsg(message, messageText);
-                        break;
-                    default:
-                        sendMsg(message, "Бип-буп, я робот-идиот, команда не распознана");
-                        break;
-
-
+                            break;
+                        case "/buy":
+                            trashArr= botService.getCart(message.getFrom().getId());
+                            if (trashArr==null || trashArr.length==0) {
+                                sendMsg(message, "Так у тебя корзина пустая, ты что купить собрался");
+                            }
+                            else {
+                                messageText ="*Ваша корзина*:\n";
+                                for (TrashDto trash : trashArr) {
+                                    messageText+=trash+"\n----------------\n";
+                                }
+                                inlineKeyboardMarkup = new InlineKeyboardMarkup();
+                                keyboardButtonsRow = new ArrayList<>();
+                                rowList = new ArrayList<>();
+                                InlineKeyboardButton buttonYes = new InlineKeyboardButton();
+                                InlineKeyboardButton buttonNo = new InlineKeyboardButton();
+                                messageText+="\n[Ссылочка, которая не работает](http://localhost:8080/buy/1675364273)";
+                                messageText+="\n`http://localhost:8080/buy/"+message.getFrom().getId()+"`";
+                                //buttonYes.setUrl("http://localhost:8080/buy/"+message.getFrom().getId());
+                                //это должна быть нормальная ссылка, которую может открыть телеграм апи
+                                //1675364273
+                                //buttonYes.setUrl("yandex.ru");
+                                buttonYes.setText("Да");
+                                buttonYes.setCallbackData("YES");
+                                buttonNo.setText("Нет");
+                                buttonNo.setCallbackData("NO");
+                                keyboardButtonsRow.add(buttonYes);
+                                keyboardButtonsRow.add(buttonNo);
+                                rowList.add(keyboardButtonsRow);
+                                inlineKeyboardMarkup.setKeyboard(rowList);
+                                sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
+                            }
+                            break;
+                        default:
+                            sendMsg(message, "Бип-буп, я робот-идиот, команда не распознана");
+                            break;
+                    }
                 }
             }
-
         }
         else if (update.hasCallbackQuery()) {
             String command = update.getCallbackQuery().getData();
@@ -601,9 +785,9 @@ public class Bot extends TelegramLongPollingBot {
             Message message = new Message();
             message.setChat(callbackQuery.getMessage().getChat());
             message.setFrom(callbackQuery.getFrom());
-            if (command.equals("next")) {
-                //TODO
-                answerCallbackQuery(callbackQuery, "Показываю следующие товары (нет)");
+            if (command.startsWith("Next")) {
+                answerCallbackQuery(callbackQuery, "Показываю следующие товары");
+                sendTovarInfo(message,fullTovarArr, Integer.parseInt(command.substring(5)));
             }
             if (command.equals("UpdateUserInfo")) {
                 boolean agreement =botService.getUserByTg(message.getFrom().getId()).getAgreement();
@@ -627,14 +811,11 @@ public class Bot extends TelegramLongPollingBot {
                 answerCallbackQuery(callbackQuery, "Ваша информация обновлена");
                 sendUserInfo(message);
             }
-
-
             else if (command.startsWith("Category:")) {
                 TovarDto[] tovarArr = botService.getTovarByCategory(callbackQuery.getFrom().getId(), Integer.parseInt(command.substring(9)));
-                sendTovarInfo(message, tovarArr);
                 answerCallbackQuery(callbackQuery, "Показываю товары в категории №"+Integer.parseInt(command.substring(9)));
+                sendTovarInfo(message, tovarArr);
             }
-
             else if (command.startsWith("Remind:")) {
                 ActionInfo actionInfo = new ActionInfo(1,Integer.parseInt(command.substring(7)));
                 actions.put(callbackQuery.getFrom().getId(),actionInfo);
@@ -644,6 +825,32 @@ public class Bot extends TelegramLongPollingBot {
                 ActionInfo actionInfo = new ActionInfo(0, Integer.parseInt(command.substring(5)));
                 actions.put(callbackQuery.getFrom().getId(), actionInfo);
                 answerCallbackQuery(callbackQuery, "Напишите, сколько товара №" + command.substring(5) + " вы хотите добавить в корзину");
+            }
+            else if (command.startsWith("ChangeCart:")) {
+                ActionInfo actionInfo = new ActionInfo(4, Integer.parseInt(command.substring(11)));
+                actions.put(callbackQuery.getFrom().getId(), actionInfo);
+                answerCallbackQuery(callbackQuery, "Напишите, сколько товара №" + command.substring(11) + " вы хотите купить");
+            }
+            else if (command.startsWith("DeleteCart:")) {
+                botService.removeFromCart(callbackQuery.getFrom().getId(), Long.parseLong(command.substring(11)));
+                answerCallbackQuery(callbackQuery, "Товар №" + command.substring(11) + " удалён из корзины");
+                TrashDto[] trashArr = botService.getCart(callbackQuery.getFrom().getId());
+                sendCartInfo(message, trashArr);
+            }
+            else if (command.startsWith("ChangeRemind:")) {
+                ActionInfo actionInfo = new ActionInfo(4, Integer.parseInt(command.substring(13)));
+                actions.put(callbackQuery.getFrom().getId(), actionInfo);
+                answerCallbackQuery(callbackQuery, "Напишите, сколько товара №" + command.substring(13) + " вы иметь в избранном");
+            }
+            else if (command.startsWith("DeleteRemind:")) {
+                botService.removeFromRemind(callbackQuery.getFrom().getId(), Long.parseLong(command.substring(13)));
+                answerCallbackQuery(callbackQuery, "Товар №" + command.substring(13) + " удалён из избранного");
+                RemindDto[] remindArr = botService.getRemind(callbackQuery.getFrom().getId());
+                sendRemindInfo(message, remindArr);
+            }
+            else if (command.equals("NO")) {
+                String messageText = "¯'_(ツ)_/¯".replace("'","\\");
+                answerCallbackQuery(callbackQuery, "Эта кнопка нужна, чтобы дать вам иллюзию выбора. Если не хотите покупать, просто не нажимайте на Да "+messageText);
             }
             else {
                 answerCallbackQuery(callbackQuery, "Ты где этот коллбэк достал?");

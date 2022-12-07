@@ -27,8 +27,13 @@ public class RemindDto {
     @JsonProperty("quantity")
     private int quantity;
 
+    @Override
     public String toString () {
         return ("*Товар в избранном: *\n"+tovar +
                 "\n*Количество: *" + quantity);
+    }
+    public String toStringMedia () {
+        return ("Товар в избранном: \n"+tovar.toStringMedia() +
+                "\nКоличество: " + quantity);
     }
 }

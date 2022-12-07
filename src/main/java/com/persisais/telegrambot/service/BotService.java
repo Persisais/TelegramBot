@@ -1,6 +1,7 @@
 package com.persisais.telegrambot.service;
 
 import com.persisais.telegrambot.model.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -15,6 +16,8 @@ import java.util.Map;
 @Component
 public class BotService {
 
+    @Value("${botSerivce.adminTelegram}")
+    private long adminTelegram;
     public RestTemplate restTemplate = new RestTemplate();
 
     public String http = "http://localhost:8080/api/users";
@@ -31,13 +34,14 @@ public class BotService {
     public String httpBuy = "http://localhost:8080/api/tovar/get/img/";
     public String httpChangeUser = "http://localhost:8080/api/users/update";
     public String httpRemoveTovarFromCart = "http://localhost:8080/api/carts/remove/";
+    public String httpRemoveTovarFromRemind = "http://localhost:8080/api/remind/remove/";
 
 
 
     HttpHeaders createHeaders(Long id_telegram){
         return new HttpHeaders() {{
             String username, password;
-            if (id_telegram == 1675364273) {
+            if (id_telegram == adminTelegram) {
                 username = "Admin";
                 password = "Admin";
                 //System.out.println("Админ замечен");
@@ -202,7 +206,6 @@ public class BotService {
         HttpEntity request = new HttpEntity(headers);
         TovarDto[] response = null;
         try {
-            //TODO Выбор категории на кнопку
             response = restTemplate.exchange(new URI(http4+id_category), HttpMethod.GET, request, TovarDto[].class).getBody();
         } catch (Exception e) {
             e.printStackTrace();
@@ -256,6 +259,27 @@ public class BotService {
             e.printStackTrace();
         }
         return response;
+    }
+
+    public void removeFromCart(Long id_telegram, Long tovarId) {
+        HttpHeaders headers = createHeaders(id_telegram);
+        HttpEntity request = new HttpEntity(headers);
+        Void response = null;
+        try {
+            response = restTemplate.exchange(new URI(httpRemoveTovarFromCart+id_telegram+"?tovarId="+tovarId), HttpMethod.DELETE, request, Void.class).getBody();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void removeFromRemind(Long id_telegram, Long tovarId) {
+        HttpHeaders headers = createHeaders(id_telegram);
+        HttpEntity request = new HttpEntity(headers);
+        Void response = null;
+        try {
+            response = restTemplate.exchange(new URI(httpRemoveTovarFromRemind+id_telegram+"?tovarId="+tovarId), HttpMethod.DELETE, request, Void.class).getBody();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 

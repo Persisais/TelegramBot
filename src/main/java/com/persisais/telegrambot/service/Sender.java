@@ -92,7 +92,7 @@
 //                buttonSecond.setCallbackData("fav"+tovarArr[j].getId().toString());
 //                keyboardButtonsSecondRow.add(buttonSecond);
 //
-//                //TODO Сделать sendPhoto, вместо sendMediaGroup, если в пятерке товаров только 1 товар
+//
 //
 //                InputMedia photo = new InputMediaPhoto();
 //                if (tovarArr[j].getPhoto()!=null) {

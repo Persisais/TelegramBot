@@ -29,4 +29,8 @@ public class TrashDto {
         return ("*Товар: *\n"+tovar +
                 "\n*Количество: *" + quantity);
     }
+    public String toStringMedia () {
+        return ("Товар: \n"+tovar.toStringMedia() +
+                "\nКоличество: " + quantity);
+    }
 }
