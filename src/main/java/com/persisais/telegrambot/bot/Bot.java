@@ -286,7 +286,7 @@ public class Bot extends TelegramLongPollingBot {
             if (r!=tovarArr.length) {
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText("-->");
-                button.setCallbackData("Next:"+iteration+1);
+                button.setCallbackData("Next:"+(iteration+1));
                 keyboardButtonsRow.add(button);
             }
             List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
@@ -304,7 +304,8 @@ public class Bot extends TelegramLongPollingBot {
     public void sendCartInfo(Message message, TrashDto[] trashArr) {
         int r, l;
         int ITEMS_PER_MESSAGE=7;
-        for (int i=0; i< (int)Math.ceil(trashArr.length/(float)ITEMS_PER_MESSAGE); i++) {
+        for (int i=0; i< (int)Math.ceil(trashArr.length/(float)ITEMS_PER_MESSAGE); i++)
+        {
             String messageText="";
             l= ITEMS_PER_MESSAGE*i;
             r= Math.min(l + ITEMS_PER_MESSAGE, trashArr.length);
@@ -312,31 +313,33 @@ public class Bot extends TelegramLongPollingBot {
             List<InlineKeyboardButton> keyboardButtonsRow= new ArrayList<>();
             List<InlineKeyboardButton> keyboardButtonsSecondRow= new ArrayList<>();
             List<InputMedia> media = new ArrayList<>();
+            //если в пачке товаров 1 товар. Мне это нужно чтобы отправлять инфу когда 1 товар в пачке
+
             if (l==trashArr.length-1) {
                 messageText += trashArr[l] + "\n----------------\n";
-                InlineKeyboardButton button = new InlineKeyboardButton();
+//                InlineKeyboardButton button = new InlineKeyboardButton();
                 InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
-                button.setText("⚙️"+trashArr[l].getTovar().getId().toString());
-                button.setCallbackData("ChangeCart:" + trashArr[l].getTovar().getId());
-                keyboardButtonsRow.add(button);
+//                button.setText("⚙️"+trashArr[l].getTovar().getId().toString());
+//                button.setCallbackData("ChangeCart:" + trashArr[l].getTovar().getId());
+//                keyboardButtonsRow.add(button);
                 buttonSecond.setText("❌️" + trashArr[l].getTovar().getId().toString());
                 buttonSecond.setCallbackData("DeleteCart:" + trashArr[l].getTovar().getId().toString());
                 keyboardButtonsSecondRow.add(buttonSecond);
                 InputFile photo = new InputFile();
                 if (trashArr[l].getTovar().getPhoto() != null) {
                     String pathname = "images/";
-                    byte[] image = botService.getTovarImage(message.getFrom().getId(), trashArr[l].getId());
+                    byte[] image = botService.getTovarImage(message.getFrom().getId(), trashArr[l].getTovar().getId());
                     try {
-                        Files.write(Paths.get(pathname + trashArr[l].getId() + ".png"), image);
+                        Files.write(Paths.get(pathname + trashArr[l].getTovar().getId() + ".png"), image);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    photo.setMedia(new File(pathname + trashArr[l].getId() + ".png"), trashArr[l].getId().toString());
+                    photo.setMedia(new File(pathname + trashArr[l].getTovar().getId() + ".png"), trashArr[l].getTovar().getId().toString());
                 } else {
                     photo.setMedia(emptyImage);
                 }
                 List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-                rowList.add(keyboardButtonsRow);
+//                rowList.add(keyboardButtonsRow);
                 rowList.add(keyboardButtonsSecondRow);
                 inlineKeyboardMarkup.setKeyboard(rowList);
                 sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
@@ -345,11 +348,11 @@ public class Bot extends TelegramLongPollingBot {
             else {
                 for (int j=l; j<r; j++) {
                     messageText+=trashArr[j]+"\n----------------\n";
-                    InlineKeyboardButton button = new InlineKeyboardButton();
+//                    InlineKeyboardButton button = new InlineKeyboardButton();
                     InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
-                    button.setText("⚙️"+trashArr[j].getTovar().getId().toString());
-                    button.setCallbackData("ChangeCart:" + trashArr[j].getTovar().getId());
-                    keyboardButtonsRow.add(button);
+//                    button.setText("⚙️"+trashArr[j].getTovar().getId().toString());
+//                    button.setCallbackData("ChangeCart:" + trashArr[j].getTovar().getId());
+//                    keyboardButtonsRow.add(button);
                     buttonSecond.setText("❌️" + trashArr[j].getTovar().getId().toString());
                     buttonSecond.setCallbackData("DeleteCart:" + trashArr[j].getTovar().getId().toString());
                     keyboardButtonsSecondRow.add(buttonSecond);
@@ -378,7 +381,7 @@ public class Bot extends TelegramLongPollingBot {
                     media.add(photo);
                 }
                 List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-                rowList.add(keyboardButtonsRow);
+//                rowList.add(keyboardButtonsRow);
                 rowList.add(keyboardButtonsSecondRow);
                 inlineKeyboardMarkup.setKeyboard(rowList);
                 sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
@@ -400,11 +403,11 @@ public class Bot extends TelegramLongPollingBot {
             List<InputMedia> media = new ArrayList<>();
             if (l==remindArr.length-1) {
                 messageText += remindArr[l] + "\n----------------\n";
-                InlineKeyboardButton button = new InlineKeyboardButton();
+//                InlineKeyboardButton button = new InlineKeyboardButton();
                 InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
-                button.setText("⚙️"+remindArr[l].getTovar().getId().toString());
-                button.setCallbackData("ChangeRemind:" + remindArr[l].getTovar().getId());
-                keyboardButtonsRow.add(button);
+//                button.setText("⚙️"+remindArr[l].getTovar().getId().toString());
+//                button.setCallbackData("ChangeRemind:" + remindArr[l].getTovar().getId());
+//                keyboardButtonsRow.add(button);
                 buttonSecond.setText("❌️" + remindArr[l].getTovar().getId().toString());
                 buttonSecond.setCallbackData("DeleteRemind:" + remindArr[l].getTovar().getId().toString());
                 keyboardButtonsSecondRow.add(buttonSecond);
@@ -431,11 +434,11 @@ public class Bot extends TelegramLongPollingBot {
             else {
                 for (int j=l; j<r; j++) {
                     messageText+=remindArr[j]+"\n----------------\n";
-                    InlineKeyboardButton button = new InlineKeyboardButton();
+//                    InlineKeyboardButton button = new InlineKeyboardButton();
                     InlineKeyboardButton buttonSecond = new InlineKeyboardButton();
-                    button.setText("⚙️"+remindArr[j].getTovar().getId().toString());
-                    button.setCallbackData("ChangeRemind:" + remindArr[j].getTovar().getId());
-                    keyboardButtonsRow.add(button);
+//                    button.setText("⚙️"+remindArr[j].getTovar().getId().toString());
+//                    button.setCallbackData("ChangeRemind:" + remindArr[j].getTovar().getId());
+//                    keyboardButtonsRow.add(button);
                     buttonSecond.setText("❌️" + remindArr[j].getTovar().getId().toString());
                     buttonSecond.setCallbackData("DeleteRemind:" + remindArr[j].getTovar().getId().toString());
                     keyboardButtonsSecondRow.add(buttonSecond);
@@ -464,7 +467,7 @@ public class Bot extends TelegramLongPollingBot {
                     media.add(photo);
                 }
                 List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-                rowList.add(keyboardButtonsRow);
+//                rowList.add(keyboardButtonsRow);
                 rowList.add(keyboardButtonsSecondRow);
                 inlineKeyboardMarkup.setKeyboard(rowList);
                 sendInlineKeyboardMsg(message, messageText,inlineKeyboardMarkup);
