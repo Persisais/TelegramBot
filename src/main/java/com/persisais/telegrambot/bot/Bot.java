@@ -190,12 +190,7 @@ public class Bot extends TelegramLongPollingBot {
                     photo.setCaption(tovarArr[j].toStringMedia());
                     media.add(photo);
                 }
-                if (r!=tovarArr.length) {
-                    InlineKeyboardButton button = new InlineKeyboardButton();
-                    button.setText("-->");
-                    button.setCallbackData("next");
-                    keyboardButtonsRow.add(button);
-                }
+
                 List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
                 rowList.add(keyboardButtonsRow);
                 rowList.add(keyboardButtonsSecondRow);
