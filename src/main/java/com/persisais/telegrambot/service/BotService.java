@@ -20,21 +20,21 @@ public class BotService {
     private long adminTelegram;
     public RestTemplate restTemplate = new RestTemplate();
 
-    public String http = "http://localhost:8080/api/users";
-    public String http2 = "http://localhost:8080/api/tovar/get";
-    public String http3 = "http://localhost:8080/api/tovar/id/";
-    public String http4 = "http://localhost:8080/api/tovar/get/category/";
-    public String http5 = "http://localhost:8080/api/carts/";
-    public String http6 = "http://localhost:8080/api/users/get/tg/";
-    public String httpGetCart ="http://localhost:8080/api/carts/get/";
-    public String httpGetCategories = "http://localhost:8080/api/category/get";
-    public String httpGetRemind = "http://localhost:8080/api/remind/get/";
-    public String httpPostRemind = "http://localhost:8080/api/remind/";
-    public String httpGetPhoto = "http://localhost:8080/api/tovar/get/img/";
-    public String httpBuy = "http://localhost:8080/api/tovar/get/img/";
-    public String httpChangeUser = "http://localhost:8080/api/users/update";
-    public String httpRemoveTovarFromCart = "http://localhost:8080/api/carts/remove/";
-    public String httpRemoveTovarFromRemind = "http://localhost:8080/api/remind/remove/";
+    public String http = "https://7ca1-5-139-212-241.eu.ngrok.io/api/users";
+    public String http2 = "https://7ca1-5-139-212-241.eu.ngrok.io/api/tovar/get";
+    public String http3 = "https://7ca1-5-139-212-241.eu.ngrok.io/api/tovar/id/";
+    public String http4 = "https://7ca1-5-139-212-241.eu.ngrok.io/api/tovar/get/category/";
+    public String http5 = "https://7ca1-5-139-212-241.eu.ngrok.io/api/carts/";
+    public String http6 = "https://7ca1-5-139-212-241.eu.ngrok.io/api/users/get/tg/";
+    public String httpGetCart ="https://7ca1-5-139-212-241.eu.ngrok.io/api/carts/get/";
+    public String httpGetCategories = "https://7ca1-5-139-212-241.eu.ngrok.io/api/category/get";
+    public String httpGetRemind = "https://7ca1-5-139-212-241.eu.ngrok.io/api/remind/get/";
+    public String httpPostRemind = "https://7ca1-5-139-212-241.eu.ngrok.io/api/remind/";
+    public String httpGetPhoto = "https://7ca1-5-139-212-241.eu.ngrok.io/api/tovar/get/img/";
+    public String httpBuy = "https://7ca1-5-139-212-241.eu.ngrok.io/api/tovar/get/img/";
+    public String httpChangeUser = "https://7ca1-5-139-212-241.eu.ngrok.io/api/users/update";
+    public String httpRemoveTovarFromCart = "https://7ca1-5-139-212-241.eu.ngrok.io/api/carts/remove/";
+    public String httpRemoveTovarFromRemind = "https://7ca1-5-139-212-241.eu.ngrok.io/api/remind/remove/";
 
 
 
