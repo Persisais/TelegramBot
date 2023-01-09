@@ -755,15 +755,16 @@ public class Bot extends TelegramLongPollingBot {
                                 rowList = new ArrayList<>();
                                 InlineKeyboardButton buttonYes = new InlineKeyboardButton();
                                 InlineKeyboardButton buttonNo = new InlineKeyboardButton();
-                                String link = "https://7ca1-5-139-212-241.eu.ngrok.io/buy/"+message.getFrom().getId();
-                                messageText+="\n[Ссылочка, которая теперь РАБОТАЕТ](https://7ca1-5-139-212-241.eu.ngrok.io/buy/"+message.getFrom().getId()+")";
-                                messageText+="\n`https://7ca1-5-139-212-241.eu.ngrok.io/buy/"+message.getFrom().getId()+"`";
-                                //buttonYes.setUrl("https://7ca1-5-139-212-241.eu.ngrok.io/buy/"+message.getFrom().getId());
+                                String link = "https://8b72-5-139-212-240.eu.ngrok.io/buy/"+message.getFrom().getId();
+                                messageText+="\n[Ссылочка, которая теперь РАБОТАЕТ](https://8b72-5-139-212-240.eu.ngrok.io/buy/"+message.getFrom().getId()+")";
+                                messageText+="\n`https://8b72-5-139-212-240.eu.ngrok.io/buy/"+message.getFrom().getId()+"`";
+                                //buttonYes.setUrl("https://8b72-5-139-212-240.eu.ngrok.io/buy/"+message.getFrom().getId());
                                 //это должна быть нормальная ссылка, которую может открыть телеграм апи
                                 //1675364273
                                 //buttonYes.setUrl("yandex.ru");
                                 buttonYes.setText("Да");
                                 buttonYes.setCallbackData("YES");
+                                buttonYes.setUrl(link);
                                 buttonNo.setText("Нет");
                                 buttonNo.setCallbackData("NO");
                                 keyboardButtonsRow.add(buttonYes);
