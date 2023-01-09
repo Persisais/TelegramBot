@@ -755,7 +755,8 @@ public class Bot extends TelegramLongPollingBot {
                                 rowList = new ArrayList<>();
                                 InlineKeyboardButton buttonYes = new InlineKeyboardButton();
                                 InlineKeyboardButton buttonNo = new InlineKeyboardButton();
-                                messageText+="\n[Ссылочка, которая теперь РАБОТАЕТ](https://7ca1-5-139-212-241.eu.ngrok.io/buy/1675364273)";
+                                String link = "https://7ca1-5-139-212-241.eu.ngrok.io/buy/"+message.getFrom().getId();
+                                messageText+="\n[Ссылочка, которая теперь РАБОТАЕТ](https://7ca1-5-139-212-241.eu.ngrok.io/buy/"+message.getFrom().getId()+")";
                                 messageText+="\n`https://7ca1-5-139-212-241.eu.ngrok.io/buy/"+message.getFrom().getId()+"`";
                                 //buttonYes.setUrl("https://7ca1-5-139-212-241.eu.ngrok.io/buy/"+message.getFrom().getId());
                                 //это должна быть нормальная ссылка, которую может открыть телеграм апи
